@@ -5,3 +5,29 @@
 .beads/bd.pipe
 .beads/.exclusive-lock
 .git/beads-worktrees/
+
+# SBT
+target/
+project/target/
+project/project/
+.bsp/
+.metals/
+.bloop/
+metals.sbt
+
+# Scala/IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Compiled files
+*.class
+*.log
