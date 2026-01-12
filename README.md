@@ -240,6 +240,40 @@ override suspend fun save(bestand: BestandCreateDocument) = withContext(Dispatch
 
 ---
 
+## Module Architecture
+
+### Module Structure
+
+The tool is organized into five modules with strict dependency boundaries:
+
+```
+modules/
+├── ir/         # Core abstract model (no dependencies)
+├── parser/     # Scala parsing (depends on ir)
+├── renderer/   # Kotlin generation (depends on ir)
+├── validator/  # Architecture validation (depends on ir)
+└── cli/        # Orchestration (depends on all)
+```
+
+### Dependency Rules
+
+- **IR module**: Language-agnostic domain model, NO dependencies
+- **Parser, Renderer, Validator**: Depend ONLY on IR
+- **CLI module**: Orchestrates all modules
+
+### Verify Module Boundaries
+
+```bash
+# Run automated boundary verification
+./scripts/verify-module-boundaries.sh
+```
+
+**Documentation**:
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Module boundaries and contracts
+- [MODULE_CONTRACTS.md](MODULE_CONTRACTS.md) - Enforcement rules and validation
+
+---
+
 ## Project Status
 
 This is a **design and planning repository**. The actual implementation is tracked separately.
@@ -253,10 +287,13 @@ This is a **design and planning repository**. The actual implementation is track
 - Test strategy planned
 
 **Phase 2: POC Implementation** 🚧 In Progress
-- Abstract model (IR)
-- Scalameta parser
-- KotlinPoet renderer
-- Basic validation
+- ✅ Module structure and boundaries defined
+- ✅ Abstract model (IR) contracts
+- ✅ Public APIs for parser, renderer, validator
+- ✅ Automated boundary enforcement
+- ⏳ Scalameta parser implementation
+- ⏳ KotlinPoet renderer implementation
+- ⏳ Architectural validator implementation
 
 **Phase 3: Production Tool** ⏳ Planned
 - Spring Boot support
