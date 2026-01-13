@@ -50,13 +50,3 @@ case class Method(
   annotations: List[Annotation] = Nil,
   documentation: Option[String] = None
 )
-
-/**
- * Annotation representation
- * @param name Annotation name (e.g., "Deprecated", "JvmStatic")
- * @param arguments Annotation arguments as key-value pairs
- */
-case class Annotation(
-  name: String,
-  arguments: Map[String, String] = Map.empty
-)

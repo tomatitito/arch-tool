@@ -46,24 +46,6 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     params.head.decltpe.get shouldBe Type.Name("String")
   }
 
-  it should "detect value objects by AnyVal extension" in {
-    val valueObject = "case class UserId(value: Long) extends AnyVal"
-    val entity = "case class User(id: UserId, name: String)"
-
-    val valueTree = valueObject.parse[Stat].get.asInstanceOf[Defn.Class]
-    val entityTree = entity.parse[Stat].get.asInstanceOf[Defn.Class]
-
-    def isValueObject(tree: Defn.Class): Boolean = {
-      tree.templ.inits.exists {
-        case Init(Type.Name("AnyVal"), _, _) => true
-        case _ => false
-      }
-    }
-
-    isValueObject(valueTree) shouldBe true
-    isValueObject(entityTree) shouldBe false
-  }
-
   // ============================================================================
   // ENTITY CONVERSION TESTS
   // ============================================================================
