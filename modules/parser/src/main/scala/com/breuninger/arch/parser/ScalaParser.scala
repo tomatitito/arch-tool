@@ -28,7 +28,7 @@ trait ScalaParser {
  */
 case class ParseResult(
   domainModels: List[DomainModel],
-  ports: List[PortInterface]
+  ports: List[Port]
 )
 
 /**
