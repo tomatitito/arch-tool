@@ -8,7 +8,24 @@ package com.breuninger.arch
  * - Domain models (value objects, entities, sealed hierarchies)
  * - Port interfaces (repository, service contracts)
  * - Type signatures and mappings
+ *
+ * The IR serves as a bridge between:
+ * - Scala code parsing (Scalameta) → IR
+ * - IR → Kotlin code generation (KotlinPoet)
+ *
+ * Main components:
+ * - [[Type]]: Type system (primitives, named types, generics, collections)
+ * - [[Method]]: Method signatures with parameters and return types
+ * - [[DomainModel]]: Domain concepts (value objects, entities, sealed hierarchies, enums)
+ * - [[Port]]: Interface contracts for architectural boundaries
+ * - [[Module]]: Package/module organization
+ * - [[Project]]: Complete codebase representation
  */
 package object ir {
-  // Placeholder - IR model definitions will go here
+  // All IR types are defined in their respective files:
+  // - Type.scala: Type representations
+  // - Method.scala: Method and parameter representations
+  // - DomainModel.scala: Domain model representations
+  // - Port.scala: Port interface representations
+  // - Module.scala: Module and project structure
 }
