@@ -31,7 +31,6 @@ sealed trait DomainModel {
   def qualifiedName: String = s"$packageName.$name"
   def typeParameters: List[Type.TypeParameter]
   def visibility: Visibility
-  def annotations: List[Annotation]
   def documentation: Option[String]
 }
 
@@ -47,7 +46,6 @@ object DomainModel {
    * @param properties Properties of the value object
    * @param methods Additional methods beyond auto-generated ones
    * @param visibility Visibility modifier
-   * @param annotations Annotations applied to the class
    * @param documentation Documentation comment
    */
   case class ValueObject(
@@ -57,7 +55,6 @@ object DomainModel {
     properties: List[Property],
     methods: List[Method] = Nil,
     visibility: Visibility = Visibility.Public,
-    annotations: List[Annotation] = Nil,
     documentation: Option[String] = None
   ) extends DomainModel
 
@@ -73,7 +70,6 @@ object DomainModel {
    * @param methods Methods defined on the entity
    * @param constructorParameters Constructor parameters (may differ from properties)
    * @param visibility Visibility modifier
-   * @param annotations Annotations applied to the class
    * @param documentation Documentation comment
    */
   case class Entity(
@@ -84,7 +80,6 @@ object DomainModel {
     methods: List[Method] = Nil,
     constructorParameters: List[Parameter] = Nil,
     visibility: Visibility = Visibility.Public,
-    annotations: List[Annotation] = Nil,
     documentation: Option[String] = None
   ) extends DomainModel
 
@@ -99,7 +94,6 @@ object DomainModel {
    * @param methods Abstract methods defined in the sealed type
    * @param subtypes The closed set of subtypes
    * @param visibility Visibility modifier
-   * @param annotations Annotations applied to the sealed type
    * @param documentation Documentation comment
    */
   case class SealedHierarchy(
@@ -109,7 +103,6 @@ object DomainModel {
     methods: List[Method] = Nil,
     subtypes: List[SealedSubtype],
     visibility: Visibility = Visibility.Public,
-    annotations: List[Annotation] = Nil,
     documentation: Option[String] = None
   ) extends DomainModel
 
@@ -118,13 +111,11 @@ object DomainModel {
    *
    * @param name Simple name of the subtype
    * @param properties Properties specific to this subtype
-   * @param annotations Annotations applied to this subtype
    * @param documentation Documentation comment
    */
   case class SealedSubtype(
     name: String,
     properties: List[Property] = Nil,
-    annotations: List[Annotation] = Nil,
     documentation: Option[String] = None
   )
 
@@ -137,7 +128,6 @@ object DomainModel {
    * @param packageName Package/namespace
    * @param values Enum values
    * @param visibility Visibility modifier
-   * @param annotations Annotations applied to the enum
    * @param documentation Documentation comment
    */
   case class Enum(
@@ -146,7 +136,6 @@ object DomainModel {
     typeParameters: List[Type.TypeParameter] = Nil,
     values: List[EnumValue],
     visibility: Visibility = Visibility.Public,
-    annotations: List[Annotation] = Nil,
     documentation: Option[String] = None
   ) extends DomainModel
 
