@@ -235,78 +235,41 @@ bd ready --json
 
 **CRITICAL: Never end a "land the plane" session without successfully pushing. The user is coordinating multiple agents and unpushed work causes severe rebase conflicts.**
 
-## Testing and Quality Checks
+## Building and Testing
 
-This project uses Gradle for building and testing. All test execution must be verified before committing code changes.
+This project uses **sbt** (Scala Build Tool) with Scala 2.13. It's a multi-module project with modules: `ir`, `parser`, `renderer`, `validator`, and `cli`.
 
-### Run Unit Tests
-
-```bash
-./gradlew test
-```
-
-This runs all unit tests in `src/test/` and generates an HTML report at `build/reports/tests/test/index.html`.
-
-### Run Integration Tests
+### Compile
 
 ```bash
-./gradlew integrationTest
+# Compile all modules
+sbt compile
+
+# Compile a specific module
+sbt "parser/compile"
 ```
 
-This runs all integration tests in `src/test-it/` and generates an HTML report at `build/reports/tests/integrationTest/index.html`.
-
-### Run All Tests (Unit + Integration)
+### Run Tests
 
 ```bash
-./gradlew testAll
+# Run all tests across all modules
+sbt test
+
+# Run tests for a specific module
+sbt "parser/test"
+sbt "ir/test"
+sbt "validator/test"
 ```
-
-This is the **recommended command** before committing or landing the plane. It runs both unit and integration tests sequentially, then generates a combined JaCoCo coverage report.
-
-### Code Quality Checks
-
-**Run ktlint (Kotlin linting):**
-```bash
-./gradlew ktlintCheck
-```
-
-**Auto-fix lint issues:**
-```bash
-./gradlew ktlintFormat
-```
-
-### Coverage Reports
-
-JaCoCo coverage is automatically generated when running `testAll`. The requirements are:
-- **Line coverage**: minimum 80%
-- **Branch coverage**: minimum 60%
-
-View the HTML coverage report:
-```bash
-open build/reports/jacoco/test/html/index.html
-```
-
-### Full Build and Verify
-
-To run the complete build pipeline (compile, lint, test, and verify coverage):
-
-```bash
-./gradlew build
-```
-
-This will fail if:
-- Tests fail
-- Coverage thresholds are not met (< 80% line coverage or < 60% branch coverage)
 
 ### Quality Gate for Landing the Plane
 
-Before running `git push`, ensure all quality gates pass:
+Before running `git push`, ensure all tests pass:
 
 ```bash
-./gradlew testAll ktlintCheck
+sbt test
 ```
 
-If either command fails, file a P0 issue with `bd create`:
+If tests fail, file a P0 issue with `bd create`:
 ```bash
 bd create "Test failure: [description]" -t bug -p 0 --json
 ```
