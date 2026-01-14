@@ -13,92 +13,98 @@ import org.scalatest.matchers.should.Matchers
 class TypeRendererSpec extends AnyFlatSpec with Matchers {
 
   "TypeRenderer" should "render primitive String type" in {
-    val typeStr = KotlinRenderer.renderTypeName(Type.Primitive("String"))
+    val typeStr = KotlinRenderer.renderTypeName(Type.StringType)
     typeStr shouldBe "String"
   }
 
   it should "render primitive Int type" in {
-    val typeStr = KotlinRenderer.renderTypeName(Type.Primitive("Int"))
+    val typeStr = KotlinRenderer.renderTypeName(Type.IntType)
     typeStr shouldBe "Int"
   }
 
   it should "render primitive Boolean type" in {
-    val typeStr = KotlinRenderer.renderTypeName(Type.Primitive("Boolean"))
+    val typeStr = KotlinRenderer.renderTypeName(Type.BooleanType)
     typeStr shouldBe "Boolean"
   }
 
   it should "render primitive Long type" in {
-    val typeStr = KotlinRenderer.renderTypeName(Type.Primitive("Long"))
+    val typeStr = KotlinRenderer.renderTypeName(Type.LongType)
     typeStr shouldBe "Long"
   }
 
   it should "render primitive Double type" in {
-    val typeStr = KotlinRenderer.renderTypeName(Type.Primitive("Double"))
+    val typeStr = KotlinRenderer.renderTypeName(Type.DoubleType)
     typeStr shouldBe "Double"
   }
 
   it should "render domain type" in {
-    val typeStr = KotlinRenderer.renderTypeName(Type.Domain("ArtikelId"))
+    val typeStr = KotlinRenderer.renderTypeName(Type.NamedType("com.example.ArtikelId"))
     typeStr shouldBe "ArtikelId"
   }
 
   it should "render generic List type" in {
     val typeStr = KotlinRenderer.renderTypeName(
-      Type.Generic("List", List(Type.Primitive("String")))
+      Type.ListType(Type.StringType)
     )
     typeStr shouldBe "List<String>"
   }
 
   it should "render generic Map type" in {
     val typeStr = KotlinRenderer.renderTypeName(
-      Type.Generic("Map", List(Type.Primitive("String"), Type.Primitive("Int")))
+      Type.MapType(Type.StringType, Type.IntType)
     )
     typeStr shouldBe "Map<String, Int>"
   }
 
   it should "render nested generic types" in {
     val typeStr = KotlinRenderer.renderTypeName(
-      Type.Generic("List", List(
-        Type.Generic("Map", List(Type.Primitive("String"), Type.Domain("User")))
-      ))
+      Type.ListType(
+        Type.MapType(Type.StringType, Type.NamedType("com.example.User"))
+      )
     )
     typeStr shouldBe "List<Map<String, User>>"
   }
 
-  it should "render Effect type as suspend function return (non-Unit)" in {
-    // Effect types with non-Unit returns should render just the wrapped type
-    // The suspend modifier is added to the function, not the type
+  it should "render nullable types" in {
     val typeStr = KotlinRenderer.renderTypeName(
-      Type.Effect(Type.Primitive("String"), Type.EffectType.IO)
+      Type.NullableType(Type.StringType)
     )
-    typeStr shouldBe "String"
+    typeStr shouldBe "String?"
   }
 
-  it should "handle Unit type in Effect" in {
-    // Effect[Unit] should be handled specially - no return type in Kotlin
-    val typeStr = KotlinRenderer.renderTypeName(
-      Type.Effect(Type.Unit, Type.EffectType.IO)
-    )
-    // For Effect[Unit], we expect empty or Unit depending on implementation
-    typeStr should (be("Unit") or be(""))
+  it should "render Unit type" in {
+    val typeStr = KotlinRenderer.renderTypeName(Type.UnitType)
+    typeStr shouldBe "Unit"
   }
 
   it should "render complex domain type with generics" in {
     val typeStr = KotlinRenderer.renderTypeName(
-      Type.Generic("Result", List(Type.Domain("User")))
+      Type.NamedType("com.example.Result", List(Type.NamedType("com.example.User")))
     )
     typeStr shouldBe "Result<User>"
   }
 
   it should "handle deeply nested generic types" in {
     val typeStr = KotlinRenderer.renderTypeName(
-      Type.Generic("Map", List(
-        Type.Primitive("String"),
-        Type.Generic("List", List(
-          Type.Generic("Set", List(Type.Domain("ArtikelId")))
-        ))
-      ))
+      Type.MapType(
+        Type.StringType,
+        Type.ListType(
+          Type.SetType(Type.NamedType("com.example.ArtikelId"))
+        )
+      )
     )
     typeStr shouldBe "Map<String, List<Set<ArtikelId>>>"
+  }
+
+  it should "render type parameters" in {
+    val typeStr = KotlinRenderer.renderTypeName(Type.TypeParameter("T"))
+    typeStr shouldBe "T"
+  }
+
+  it should "render function types" in {
+    val typeStr = KotlinRenderer.renderTypeName(
+      Type.FunctionType(List(Type.StringType, Type.IntType), Type.BooleanType)
+    )
+    typeStr shouldBe "(String, Int) -> Boolean"
   }
 }

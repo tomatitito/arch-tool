@@ -10,5 +10,21 @@ package com.breuninger.arch
  * - KotlinRenderer: Core renderer using KotlinPoet to generate Kotlin code
  */
 package object renderer {
-  // Renderer implementation is in KotlinRenderer.scala
+
+  /**
+   * Configuration for Kotlin code rendering
+   */
+  case class RenderConfig(
+    indentSize: Int = 4,
+    useDataClasses: Boolean = true,
+    generateKDoc: Boolean = true
+  )
+
+  /**
+   * Error during rendering
+   */
+  case class RenderError(
+    message: String,
+    cause: Option[Throwable] = None
+  )
 }

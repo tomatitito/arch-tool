@@ -38,8 +38,8 @@ class PortSpec extends AnyFlatSpec with Matchers {
       packageName = "com.example.ports",
       typeParameters = List(typeT),
       methods = List(
-        Method("findById", List(Parameter("id", Type.StringType)), Type.NullableType(typeT)),
-        Method("save", List(Parameter("entity", typeT)), Type.UnitType)
+        Method(name = "findById", parameters = List(Parameter("id", Type.StringType)), returnType = Type.NullableType(typeT)),
+        Method(name = "save", parameters = List(Parameter("entity", typeT)), returnType = Type.UnitType)
       )
     )
 
@@ -88,7 +88,7 @@ class PortSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "be abstract by default" in {
-    val method = Method("doSomething", Nil, Type.UnitType)
+    val method = Method(name = "doSomething", parameters = Nil, returnType = Type.UnitType)
     method.isAbstract shouldBe true
   }
 
