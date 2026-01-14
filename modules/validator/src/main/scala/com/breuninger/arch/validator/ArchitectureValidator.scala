@@ -20,14 +20,14 @@ trait ArchitectureValidator {
   /**
    * Validate port interfaces against hexagonal architecture rules
    */
-  def validatePorts(ports: List[PortInterface]): ValidationResult
+  def validatePorts(ports: List[Port]): ValidationResult
 
   /**
    * Validate complete architecture (models + ports)
    */
   def validate(
     models: List[DomainModel],
-    ports: List[PortInterface]
+    ports: List[Port]
   ): ValidationResult
 }
 

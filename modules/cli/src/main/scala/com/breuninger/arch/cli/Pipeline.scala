@@ -12,7 +12,7 @@ import java.nio.file.Path
 trait MigrationPipeline {
   def parser: ScalaParser
   def validator: ArchitectureValidator
-  def renderer: KotlinRenderer
+  def renderer: KotlinRenderer.type
 
   /**
    * Execute the complete migration pipeline

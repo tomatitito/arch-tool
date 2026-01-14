@@ -38,24 +38,31 @@ object KotlinRenderer {
   def renderDomainModel(model: DomainModel): String = {
     // TODO: Implement using KotlinPoet
     model match {
-      case DomainModel.ValueObject(name, packageName, field) =>
-        s"""package $packageName
+      case vo: DomainModel.ValueObject =>
+        val propsStr = vo.properties.map(p => s"val ${p.name}: ${renderTypeNameSimple(p.propertyType)}").mkString(", ")
+        s"""package ${vo.packageName}
            |
-           |@JvmInline
-           |value class $name(val ${field.name}: ${renderTypeNameSimple(field.fieldType)})
+           |data class ${vo.name}($propsStr)
            |""".stripMargin
 
-      case DomainModel.Entity(name, packageName, fields) =>
-        s"""package $packageName
+      case entity: DomainModel.Entity =>
+        val propsStr = entity.properties.map(p => s"val ${p.name}: ${renderTypeNameSimple(p.propertyType)}").mkString(", ")
+        s"""package ${entity.packageName}
            |
-           |data class $name(
-           |)
+           |data class ${entity.name}($propsStr)
            |""".stripMargin
 
-      case DomainModel.SealedHierarchy(name, packageName, variants) =>
-        s"""package $packageName
+      case hierarchy: DomainModel.SealedHierarchy =>
+        s"""package ${hierarchy.packageName}
            |
-           |sealed interface $name
+           |sealed interface ${hierarchy.name}
+           |""".stripMargin
+
+      case enumModel: DomainModel.Enum =>
+        val valuesStr = enumModel.values.map(_.name).mkString(", ")
+        s"""package ${enumModel.packageName}
+           |
+           |enum class ${enumModel.name} { $valuesStr }
            |""".stripMargin
     }
   }
@@ -75,11 +82,23 @@ object KotlinRenderer {
    * Simple type name rendering (stub implementation).
    */
   private def renderTypeNameSimple(tpe: Type): String = tpe match {
-    case Type.Primitive(name) => name
-    case Type.Domain(name) => name
-    case Type.Generic(name, args) =>
-      s"$name<${args.map(renderTypeNameSimple).mkString(", ")}>"
-    case Type.Effect(wrapped, _) => renderTypeNameSimple(wrapped)
-    case Type.Unit => "Unit"
+    case Type.IntType => "Int"
+    case Type.LongType => "Long"
+    case Type.DoubleType => "Double"
+    case Type.FloatType => "Float"
+    case Type.BooleanType => "Boolean"
+    case Type.StringType => "String"
+    case Type.UnitType => "Unit"
+    case Type.NamedType(qualifiedName, typeArgs) =>
+      val simpleName = qualifiedName.split('.').last
+      if (typeArgs.isEmpty) simpleName
+      else s"$simpleName<${typeArgs.map(renderTypeNameSimple).mkString(", ")}>"
+    case Type.TypeParameter(name, _) => name
+    case Type.NullableType(underlying) => s"${renderTypeNameSimple(underlying)}?"
+    case Type.ListType(elementType) => s"List<${renderTypeNameSimple(elementType)}>"
+    case Type.SetType(elementType) => s"Set<${renderTypeNameSimple(elementType)}>"
+    case Type.MapType(keyType, valueType) => s"Map<${renderTypeNameSimple(keyType)}, ${renderTypeNameSimple(valueType)}>"
+    case Type.FunctionType(paramTypes, returnType) =>
+      s"(${paramTypes.map(renderTypeNameSimple).mkString(", ")}) -> ${renderTypeNameSimple(returnType)}"
   }
 }
