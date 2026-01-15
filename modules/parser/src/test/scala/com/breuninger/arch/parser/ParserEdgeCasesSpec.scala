@@ -24,9 +24,9 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                       |  y: String
                       |)""".stripMargin
 
-    compact.parse[Stat].isInstanceOf[Parsed.Success[_]] shouldBe true
-    spaced.parse[Stat].isInstanceOf[Parsed.Success[_]] shouldBe true
-    multiline.parse[Stat].isInstanceOf[Parsed.Success[_]] shouldBe true
+    compact.parse[Stat].isInstanceOf[Parsed.Success[?]] shouldBe true
+    spaced.parse[Stat].isInstanceOf[Parsed.Success[?]] shouldBe true
+    multiline.parse[Stat].isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle trailing commas in parameter lists" in {
@@ -36,7 +36,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |)""".stripMargin
 
     val result = code.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle leading/trailing whitespace" in {
@@ -47,7 +47,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |  """.stripMargin
 
     val result = code.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -58,14 +58,14 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "case class `Type`(value: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle underscore in names" in {
     val code = "case class User_Data(user_id: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Class]
     tree.name.value shouldBe "User_Data"
   }
@@ -74,7 +74,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "case class $Special(value: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle very long names" in {
@@ -82,7 +82,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = s"case class $longName(value: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -93,24 +93,24 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "trait Repository[K, V] { def save(key: K, value: V): IO[Unit] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    tree.tparams should have length 2
+    tree.tparamClause should have length 2
   }
 
   it should "handle type parameter bounds" in {
     val code = "trait Repository[A <: Document] { def save(entity: A): IO[Unit] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle variance annotations" in {
     val covariant = "trait Producer[+A] { def produce(): A }"
     val contravariant = "trait Consumer[-A] { def consume(a: A): Unit }"
 
-    covariant.parse[Stat].isInstanceOf[Parsed.Success[_]] shouldBe true
-    contravariant.parse[Stat].isInstanceOf[Parsed.Success[_]] shouldBe true
+    covariant.parse[Stat].isInstanceOf[Parsed.Success[?]] shouldBe true
+    contravariant.parse[Stat].isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle context bounds" in {
@@ -118,7 +118,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "trait Repository[A] { def max(items: List[A])(implicit ord: Ordering[A]): A }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -129,9 +129,9 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "case class Config(port: Int = 8080, host: String = \"localhost\")"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Class]
-    val params = tree.ctor.paramss.flatten
+    val params = tree.ctor.paramClauses.flatten
     params.foreach(_.default shouldBe defined)
   }
 
@@ -139,21 +139,21 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "case class Mutable(var count: Int, val name: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle by-name parameters" in {
     val code = "trait Executor { def execute(task: => Unit): IO[Unit] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle repeated parameters (varargs)" in {
     val code = "trait Processor { def process(items: String*): IO[Unit] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -164,14 +164,14 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "@deprecated case class OldClass(x: Int)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle annotations with parameters" in {
     val code = """@SerialVersionUID(1L) case class Versioned(x: Int)"""
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle multiple annotations" in {
@@ -180,7 +180,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class MultiAnnotated(x: Int)""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -191,21 +191,21 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "trait Combined extends TraitA with TraitB with TraitC"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle self-type annotations" in {
     val code = "trait Component { self: Dependency => def doWork(): Unit }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle early initializers" in {
     val code = "case class Early(x: Int) extends { val y = 42 } with Base"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -216,35 +216,35 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "trait Processor { def map(f: String => Int): IO[Unit] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle tuple types" in {
     val code = "trait Splitter { def split(input: String): (String, String) }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle existential types" in {
     val code = "trait Container { def get(): List[_] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle nested type projections" in {
     val code = "trait Outer { type Inner; def get: Outer#Inner }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle deeply nested generic types" in {
     val code = "trait Deep { def get(): IO[Either[Error, Option[List[Map[String, Document]]]]] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -256,7 +256,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int) // inline comment""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle multi-line comments" in {
@@ -265,7 +265,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int)""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle scaladoc comments" in {
@@ -276,7 +276,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int)""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -287,25 +287,25 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "case class Empty()"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Class]
-    tree.ctor.paramss.flatten shouldBe empty
+    tree.ctor.paramClauses.flatten shouldBe empty
   }
 
   it should "handle trait with no methods" in {
     val code = "trait EmptyTrait"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    tree.templ.stats shouldBe empty
+    tree.templ.body.stats shouldBe empty
   }
 
   it should "handle sealed trait with no variants (unusual but valid)" in {
     val code = "sealed trait NoVariants"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -317,7 +317,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Bar(x: Int)""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle deeply nested packages" in {
@@ -325,7 +325,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Bar(x: Int)""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle package objects" in {
@@ -334,7 +334,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -346,7 +346,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int)""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle selective imports" in {
@@ -354,7 +354,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int)""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle renamed imports" in {
@@ -362,7 +362,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int)""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle hidden imports" in {
@@ -370,7 +370,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |case class Foo(x: Int)""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -420,7 +420,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val source = result.get
     source.stats should have length 2
   }
@@ -432,7 +432,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle enums (Scala 3 style enum definition in Scala 2 syntax)" in {
@@ -444,7 +444,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Source]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle repository with complete CRUD operations" in {
@@ -458,9 +458,9 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    val methods = tree.templ.stats.collect { case m: Decl.Def => m }
+    val methods = tree.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 6
   }
 
@@ -472,7 +472,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = "type UserId = String"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle path-dependent types" in {
@@ -482,7 +482,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle abstract type members" in {
@@ -492,14 +492,14 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle refined types (type aliases with bounds)" in {
     val code = "type PositiveInt = Int"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -510,13 +510,13 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
     val code = """case class Message(text: String = "Hello 世界 🌍")"""
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   it should "handle Unicode identifiers" in {
     val code = "case class Données(valeur: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 }

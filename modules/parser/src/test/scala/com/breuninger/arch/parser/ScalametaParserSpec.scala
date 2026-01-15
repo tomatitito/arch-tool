@@ -85,7 +85,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
 
   "Scalameta parser" should "successfully parse a simple value object" in {
     val result = Fixtures.simpleValueObject.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val tree = result.get
     tree shouldBe a[Defn.Class]
@@ -97,42 +97,42 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
 
   it should "successfully parse an entity with multiple fields" in {
     val result = Fixtures.entityWithMultipleFields.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val classDefn = result.get.asInstanceOf[Defn.Class]
     classDefn.name.value shouldBe "BestandCreateDocument"
 
-    val params = classDefn.ctor.paramss.flatten
+    val params = classDefn.ctor.paramClauses.flatten
     params should have length 4
     params.map(_.name.value) should contain allOf("id", "quantity", "warehouse", "timestamp")
   }
 
   it should "successfully parse a trait interface (port)" in {
     val result = Fixtures.simplePort.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val traitDefn = result.get.asInstanceOf[Defn.Trait]
     traitDefn.name.value shouldBe "BestandRepository"
 
-    val methods = traitDefn.templ.stats.collect { case m: Decl.Def => m }
+    val methods = traitDefn.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 2
     methods.map(_.name.value) should contain allOf("save", "getByIds")
   }
 
   it should "successfully parse code with package and imports" in {
     val result = Fixtures.portWithPackageAndImports.parse[Source]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val source = result.get
     source.stats should have length 1
 
     val pkg = source.stats.head.asInstanceOf[Pkg]
-    pkg.stats should have length 2 // Import + Trait
+    pkg.body should have length 2 // Import + Trait
   }
 
   it should "successfully parse a sealed trait hierarchy" in {
     val result = Fixtures.sealedTraitHierarchy.parse[Source]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val source = result.get
     source.stats should have length 4 // sealed trait + 3 case classes/objects
@@ -144,38 +144,38 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
 
   it should "successfully parse complex type signatures" in {
     val result = Fixtures.complexTypes.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val traitDefn = result.get.asInstanceOf[Defn.Trait]
-    val methods = traitDefn.templ.stats.collect { case m: Decl.Def => m }
+    val methods = traitDefn.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 5
   }
 
   it should "successfully parse methods with multiple parameter lists" in {
     val result = Fixtures.multipleParameterLists.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val traitDefn = result.get.asInstanceOf[Defn.Trait]
-    val method = traitDefn.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = traitDefn.templ.body.stats.collect { case m: Decl.Def => m }.head
 
-    method.paramss should have length 2
+    method.paramClauses should have length 2
   }
 
   it should "successfully parse generic type parameters" in {
     val result = Fixtures.genericPort.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val traitDefn = result.get.asInstanceOf[Defn.Trait]
-    traitDefn.tparams should have length 1
-    traitDefn.tparams.head.name.value shouldBe "A"
+    traitDefn.tparamClause should have length 1
+    traitDefn.tparamClause.head.name.value shouldBe "A"
   }
 
   it should "successfully parse nested generic types (Either[A, B])" in {
     val result = Fixtures.nestedTypes.parse[Stat]
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val traitDefn = result.get.asInstanceOf[Defn.Trait]
-    val methods = traitDefn.templ.stats.collect { case m: Decl.Def => m }
+    val methods = traitDefn.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 2
   }
 
@@ -186,7 +186,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
   "Type extractor" should "extract simple type names" in {
     val code = "case class Foo(name: String, age: Int)"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Class]
-    val params = tree.ctor.paramss.flatten
+    val params = tree.ctor.paramClauses.flatten
 
     params(0).decltpe.get.structure shouldBe Type.Name("String").structure
     params(1).decltpe.get.structure shouldBe Type.Name("Int").structure
@@ -195,47 +195,47 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
   it should "extract generic type applications" in {
     val code = "trait Repo { def findAll(): List[String] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     method.decltpe shouldBe a[Type.Apply]
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("List").structure
-    typeApp.args should have length 1
-    typeApp.args.head.structure shouldBe Type.Name("String").structure
+    typeApp.argClause.values should have length 1
+    typeApp.argClause.values.head.structure shouldBe Type.Name("String").structure
   }
 
   it should "extract effect types (IO[A])" in {
     val code = "trait Repo { def save(doc: Document): IO[Unit] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     method.decltpe shouldBe a[Type.Apply]
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("IO").structure
-    typeApp.args.head.structure shouldBe Type.Name("Unit").structure
+    typeApp.argClause.values.head.structure shouldBe Type.Name("Unit").structure
   }
 
   it should "extract nested generic types (IO[List[A]])" in {
     val code = "trait Repo { def findAll(): IO[List[Document]] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val outerType = method.decltpe.asInstanceOf[Type.Apply]
     outerType.tpe.structure shouldBe Type.Name("IO").structure
 
-    val innerType = outerType.args.head.asInstanceOf[Type.Apply]
+    val innerType = outerType.argClause.values.head.asInstanceOf[Type.Apply]
     innerType.tpe.structure shouldBe Type.Name("List").structure
-    innerType.args.head.structure shouldBe Type.Name("Document").structure
+    innerType.argClause.values.head.structure shouldBe Type.Name("Document").structure
   }
 
   it should "extract Option types" in {
     val code = "trait Repo { def findById(id: String): Option[Document] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("Option").structure
-    typeApp.args.head.structure shouldBe Type.Name("Document").structure
+    typeApp.argClause.values.head.structure shouldBe Type.Name("Document").structure
   }
 
   // ============================================================================
@@ -295,7 +295,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
   "Method signature extractor" should "extract method name" in {
     val code = "trait Repo { def save(doc: Document): IO[Unit] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     method.name.value shouldBe "save"
   }
@@ -303,9 +303,9 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
   it should "extract method parameters" in {
     val code = "trait Repo { def save(doc: Document, force: Boolean): IO[Unit] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
-    val params = method.paramss.flatten
+    val params = method.paramClauses.flatten
     params should have length 2
     params(0).name.value shouldBe "doc"
     params(1).name.value shouldBe "force"
@@ -314,19 +314,19 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
   it should "extract method return type" in {
     val code = "trait Repo { def count(): IO[Int] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val returnType = method.decltpe.asInstanceOf[Type.Apply]
     returnType.tpe.structure shouldBe Type.Name("IO").structure
-    returnType.args.head.structure shouldBe Type.Name("Int").structure
+    returnType.argClause.values.head.structure shouldBe Type.Name("Int").structure
   }
 
   it should "handle methods with no parameters" in {
     val code = "trait Repo { def findAll(): IO[List[Document]] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
-    method.paramss.flatten should have length 0
+    method.paramClauses.flatten should have length 0
   }
 
   // ============================================================================
@@ -353,7 +353,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val tree = code.parse[Source].get
     val pkg = tree.stats.head.asInstanceOf[Pkg]
 
-    val imports = pkg.stats.collect { case i: Import => i }
+    val imports = pkg.body.collect { case i: Import => i }
     imports should have length 2
   }
 
@@ -401,18 +401,18 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val code = "trait EmptyPort"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    tree.templ.stats shouldBe empty
+    tree.templ.body.stats shouldBe empty
   }
 
   it should "handle trait with only one method" in {
     val code = "trait SingleMethod { def foo(): String }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    val methods = tree.templ.stats.collect { case m: Decl.Def => m }
+    val methods = tree.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 1
   }
 
@@ -420,18 +420,18 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val code = "case class SingleField(value: String)"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Class]
-    tree.ctor.paramss.flatten should have length 1
+    tree.ctor.paramClauses.flatten should have length 1
   }
 
   it should "handle case class with no fields (case object equivalent)" in {
     val code = "case class NoFields()"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Class]
-    tree.ctor.paramss.flatten should have length 0
+    tree.ctor.paramClauses.flatten should have length 0
   }
 
   it should "reject invalid Scala syntax" in {
@@ -445,9 +445,9 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val code = "trait Service { def doSomething(): Unit }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
     method.decltpe.structure shouldBe Type.Name("Unit").structure
   }
 
@@ -455,7 +455,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val code = "trait Service { def execute(): IO[Either[Error, Option[Result]]] }"
     val result = code.parse[Stat]
 
-    result.isInstanceOf[Parsed.Success[_]] shouldBe true
+    result.isInstanceOf[Parsed.Success[?]] shouldBe true
   }
 
   // ============================================================================
@@ -472,7 +472,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val source = code.parse[Source].get
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
-    val classes = pkg.stats.collect { case c: Defn.Class => c }
+    val classes = pkg.body.collect { case c: Defn.Class => c }
     classes should have length 2
     classes.map(_.name.value) should contain allOf("A", "B")
   }
@@ -487,7 +487,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val source = code.parse[Source].get
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
-    val traits = pkg.stats.collect { case t: Defn.Trait => t }
+    val traits = pkg.body.collect { case t: Defn.Trait => t }
     traits should have length 2
     traits.map(_.name.value) should contain allOf("RepoA", "RepoB")
   }
@@ -501,7 +501,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
 
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val methods = tree.templ.stats.collect { case m: Decl.Def => m }
+    val methods = tree.templ.body.stats.collect { case m: Decl.Def => m }
 
     methods should have length 4
     methods.map(_.name.value) should contain allOf("save", "findById", "delete", "count")
@@ -534,16 +534,16 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
     // Should have: import + value object + entity + port
-    pkg.stats should have length 4
+    pkg.body should have length 4
 
-    val imports = pkg.stats.collect { case i: Import => i }
+    val imports = pkg.body.collect { case i: Import => i }
     imports should have length 1
 
-    val classes = pkg.stats.collect { case c: Defn.Class => c }
+    val classes = pkg.body.collect { case c: Defn.Class => c }
     classes should have length 2
     classes.map(_.name.value) should contain allOf("ArtikelId", "BestandCreateDocument")
 
-    val traits = pkg.stats.collect { case t: Defn.Trait => t }
+    val traits = pkg.body.collect { case t: Defn.Trait => t }
     traits should have length 1
     traits.head.name.value shouldBe "BestandRepository"
   }
@@ -574,16 +574,16 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
     // Should have sealed trait + 3 case classes + 1 case object
-    pkg.stats should have length 5
+    pkg.body should have length 5
 
-    val sealedTrait = pkg.stats.head.asInstanceOf[Defn.Trait]
+    val sealedTrait = pkg.body.head.asInstanceOf[Defn.Trait]
     sealedTrait.mods.exists { case Mod.Sealed() => true; case _ => false } shouldBe true
     sealedTrait.name.value shouldBe "ProcessingResult"
 
-    val caseClasses = pkg.stats.tail.collect { case c: Defn.Class => c }
+    val caseClasses = pkg.body.tail.collect { case c: Defn.Class => c }
     caseClasses should have length 3
 
-    val caseObjects = pkg.stats.tail.collect { case o: Defn.Object => o }
+    val caseObjects = pkg.body.tail.collect { case o: Defn.Object => o }
     caseObjects should have length 1
   }
 }

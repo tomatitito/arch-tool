@@ -35,12 +35,12 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     tree.name.value shouldBe "ArtikelId"
 
     val hasAnyVal = tree.templ.inits.exists {
-      case Init(Type.Name("AnyVal"), _, _) => true
+      case Init.After_4_6_0(Type.Name("AnyVal"), _, _) => true
       case _ => false
     }
     hasAnyVal shouldBe true
 
-    val params = tree.ctor.paramss.flatten
+    val params = tree.ctor.paramClauses.flatten
     params should have length 1
     params.head.name.value shouldBe "value"
     params.head.decltpe.get.structure shouldBe Type.Name("String").structure
@@ -72,7 +72,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
 
     tree.name.value shouldBe "BestandCreateDocument"
 
-    val params = tree.ctor.paramss.flatten
+    val params = tree.ctor.paramClauses.flatten
     params should have length 3
 
     val fieldInfo = params.map { p =>
@@ -90,7 +90,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     val code = "case class EmptyEntity()"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Class]
 
-    tree.ctor.paramss.flatten shouldBe empty
+    tree.ctor.paramClauses.flatten shouldBe empty
   }
 
   // ============================================================================
@@ -125,14 +125,14 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
 
     tree.name.value shouldBe "BestandRepository"
 
-    val methods = tree.templ.stats.collect { case m: Decl.Def => m }
+    val methods = tree.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 2
 
     // Verify first method
     val saveMethod = methods.head
     saveMethod.name.value shouldBe "save"
 
-    val saveParams = saveMethod.paramss.flatten
+    val saveParams = saveMethod.paramClauses.flatten
     saveParams should have length 1
     saveParams.head.name.value shouldBe "bestand"
 
@@ -146,7 +146,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
 
     tree.name.value shouldBe "EmptyPort"
-    tree.templ.stats shouldBe empty
+    tree.templ.body.stats shouldBe empty
   }
 
   // ============================================================================
@@ -166,7 +166,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     primitives.foreach { case (name, expectedType) =>
       val code = s"case class Test(field: $name)"
       val tree = code.parse[Stat].get.asInstanceOf[Defn.Class]
-      val param = tree.ctor.paramss.flatten.head
+      val param = tree.ctor.paramClauses.flatten.head
 
       param.decltpe.get.structure shouldBe expectedType.structure
     }
@@ -175,69 +175,69 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
   it should "convert generic types (List[A])" in {
     val code = "case class Test(items: List[String])"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Class]
-    val param = tree.ctor.paramss.flatten.head
+    val param = tree.ctor.paramClauses.flatten.head
 
     val typeApp = param.decltpe.get.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("List").structure
-    typeApp.args should have length 1
-    typeApp.args.head.structure shouldBe Type.Name("String").structure
+    typeApp.argClause.values should have length 1
+    typeApp.argClause.values.head.structure shouldBe Type.Name("String").structure
   }
 
   it should "convert effect types (IO[A])" in {
     val code = "trait Test { def foo(): IO[String] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("IO").structure
-    typeApp.args.head.structure shouldBe Type.Name("String").structure
+    typeApp.argClause.values.head.structure shouldBe Type.Name("String").structure
   }
 
   it should "convert Option types" in {
     val code = "trait Test { def find(): Option[Document] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("Option").structure
-    typeApp.args.head.structure shouldBe Type.Name("Document").structure
+    typeApp.argClause.values.head.structure shouldBe Type.Name("Document").structure
   }
 
   it should "convert Either types" in {
     val code = "trait Test { def execute(): Either[Error, Result] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("Either").structure
-    typeApp.args should have length 2
-    typeApp.args(0).structure shouldBe Type.Name("Error").structure
-    typeApp.args(1).structure shouldBe Type.Name("Result").structure
+    typeApp.argClause.values should have length 2
+    typeApp.argClause.values(0).structure shouldBe Type.Name("Error").structure
+    typeApp.argClause.values(1).structure shouldBe Type.Name("Result").structure
   }
 
   it should "convert nested generic types (IO[List[A]])" in {
     val code = "trait Test { def findAll(): IO[List[Document]] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val outerType = method.decltpe.asInstanceOf[Type.Apply]
     outerType.tpe.structure shouldBe Type.Name("IO").structure
 
-    val innerType = outerType.args.head.asInstanceOf[Type.Apply]
+    val innerType = outerType.argClause.values.head.asInstanceOf[Type.Apply]
     innerType.tpe.structure shouldBe Type.Name("List").structure
-    innerType.args.head.structure shouldBe Type.Name("Document").structure
+    innerType.argClause.values.head.structure shouldBe Type.Name("Document").structure
   }
 
   it should "convert Map types" in {
     val code = "trait Test { def getMapping(): Map[String, Document] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     val typeApp = method.decltpe.asInstanceOf[Type.Apply]
     typeApp.tpe.structure shouldBe Type.Name("Map").structure
-    typeApp.args should have length 2
-    typeApp.args(0).structure shouldBe Type.Name("String").structure
-    typeApp.args(1).structure shouldBe Type.Name("Document").structure
+    typeApp.argClause.values should have length 2
+    typeApp.argClause.values(0).structure shouldBe Type.Name("String").structure
+    typeApp.argClause.values(1).structure shouldBe Type.Name("Document").structure
   }
 
   // ============================================================================
@@ -250,7 +250,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
                  |}""".stripMargin
 
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
     // Expected IR:
     // Method(
@@ -264,7 +264,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
 
     method.name.value shouldBe "save"
 
-    val params = method.paramss.flatten
+    val params = method.paramClauses.flatten
     params should have length 2
     params(0).name.value shouldBe "document"
     params(0).decltpe.get.structure shouldBe Type.Name("Document").structure
@@ -273,25 +273,25 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
 
     val returnType = method.decltpe.asInstanceOf[Type.Apply]
     returnType.tpe.structure shouldBe Type.Name("IO").structure
-    returnType.args.head.structure shouldBe Type.Name("Unit").structure
+    returnType.argClause.values.head.structure shouldBe Type.Name("Unit").structure
   }
 
   it should "handle methods with no parameters" in {
     val code = "trait Test { def count(): IO[Int] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
-    method.paramss.flatten shouldBe empty
+    method.paramClauses.flatten shouldBe empty
   }
 
   it should "handle multiple parameter lists" in {
     val code = "trait Test { def process(input: String)(implicit ec: ExecutionContext): IO[Result] }"
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
-    val method = tree.templ.stats.collect { case m: Decl.Def => m }.head
+    val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
-    method.paramss should have length 2
-    method.paramss(0) should have length 1
-    method.paramss(1) should have length 1
+    method.paramClauses should have length 2
+    method.paramClauses(0) should have length 1
+    method.paramClauses(1) should have length 1
   }
 
   // ============================================================================
@@ -325,7 +325,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     // Verify variants extend the sealed trait
     variants.foreach { variant =>
       val extendsResult = variant.templ.inits.exists {
-        case Init(Type.Name("Result"), _, _) => true
+        case Init.After_4_6_0(Type.Name("Result"), _, _) => true
         case _ => false
       }
       extendsResult shouldBe true
@@ -392,7 +392,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     val source = code.parse[Source].get
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
-    val imports = pkg.stats.collect { case i: Import => i }
+    val imports = pkg.body.collect { case i: Import => i }
     imports should have length 3
   }
 
@@ -418,20 +418,20 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
     // Should contain: import, value object, entity, port
-    val imports = pkg.stats.collect { case i: Import => i }
+    val imports = pkg.body.collect { case i: Import => i }
     imports should have length 1
 
-    val classes = pkg.stats.collect { case c: Defn.Class => c }
+    val classes = pkg.body.collect { case c: Defn.Class => c }
     classes should have length 2
 
-    val traits = pkg.stats.collect { case t: Defn.Trait => t }
+    val traits = pkg.body.collect { case t: Defn.Trait => t }
     traits should have length 1
 
     // Validate value object
     val valueObject = classes.head
     valueObject.name.value shouldBe "DocumentId"
     val hasAnyVal = valueObject.templ.inits.exists {
-      case Init(Type.Name("AnyVal"), _, _) => true
+      case Init.After_4_6_0(Type.Name("AnyVal"), _, _) => true
       case _ => false
     }
     hasAnyVal shouldBe true
@@ -443,7 +443,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     // Validate port
     val port = traits.head
     port.name.value shouldBe "DocumentRepository"
-    val methods = port.templ.stats.collect { case m: Decl.Def => m }
+    val methods = port.templ.body.stats.collect { case m: Decl.Def => m }
     methods should have length 3
   }
 
@@ -472,7 +472,7 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     // Variants
     val variants = pkg.stats.collect {
       case c: Defn.Class if c.templ.inits.exists {
-        case Init(Type.Name("UserEvent"), _, _) => true
+        case Init.After_4_6_0(Type.Name("UserEvent"), _, _) => true
         case _ => false
       } => c
     }
