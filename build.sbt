@@ -3,7 +3,7 @@ name := "arch-tool"
 
 // Common settings for all modules
 ThisBuild / version := "0.1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.13.12"
+ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / organization := "com.breuninger"
 
 // Common dependencies
@@ -13,10 +13,7 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-unchecked",
     "-feature",
-    "-Xlint",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard"
+    "-Wunused:all"
   ),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.17" % Test
@@ -48,7 +45,7 @@ lazy val parser = (project in file("modules/parser"))
     name := "arch-tool-parser",
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "scalameta" % "4.8.15"
+      "org.scalameta" %% "scalameta" % "4.14.4"
     )
   )
 
