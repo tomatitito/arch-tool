@@ -3,7 +3,7 @@ name := "arch-tool"
 
 // Common settings for all modules
 ThisBuild / version := "0.1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / scalaVersion := "3.7.4"
 ThisBuild / organization := "com.breuninger"
 
 // Common dependencies
