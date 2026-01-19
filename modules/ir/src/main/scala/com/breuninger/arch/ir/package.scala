@@ -7,6 +7,8 @@ package com.breuninger.arch
  * This module defines the data structures that represent:
  * - Domain models (value objects, entities, sealed hierarchies)
  * - Port interfaces (repository, service contracts)
+ * - Application services (orchestration, use cases)
+ * - Adapters (infrastructure implementations)
  * - Type signatures and mappings
  *
  * The IR serves as a bridge between:
@@ -18,6 +20,8 @@ package com.breuninger.arch
  * - [[Method]]: Method signatures with parameters and return types
  * - [[DomainModel]]: Domain concepts (value objects, entities, sealed hierarchies, enums)
  * - [[Port]]: Interface contracts for architectural boundaries
+ * - [[Service]]: Application services with port dependencies
+ * - [[Adapter]]: Infrastructure implementations of ports
  * - [[Module]]: Package/module organization
  * - [[Project]]: Complete codebase representation
  */

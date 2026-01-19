@@ -13,7 +13,9 @@ package com.breuninger.arch.ir
  * @param packageName Full package name (e.g., "com.example.domain")
  * @param domainModels Domain models defined in this module
  * @param ports Port interfaces defined in this module
- * @param portImplementations Port implementations in this module
+ * @param portImplementations Port implementations in this module (legacy, use adapters)
+ * @param services Application services defined in this module
+ * @param adapters Adapter implementations in this module
  * @param subModules Nested sub-modules
  * @param imports External dependencies/imports
  * @param documentation Documentation comment
@@ -24,6 +26,8 @@ case class Module(
   domainModels: List[DomainModel] = Nil,
   ports: List[Port] = Nil,
   portImplementations: List[PortImplementation] = Nil,
+  services: List[Service] = Nil,
+  adapters: List[Adapter] = Nil,
   subModules: List[Module] = Nil,
   imports: List[Import] = Nil,
   documentation: Option[String] = None
@@ -47,6 +51,16 @@ case class Module(
   def findPort(name: String): Option[Port] =
     ports.find(_.name == name)
       .orElse(subModules.flatMap(_.findPort(name)).headOption)
+
+  /** Find a service by name */
+  def findService(name: String): Option[Service] =
+    services.find(_.name == name)
+      .orElse(subModules.flatMap(_.findService(name)).headOption)
+
+  /** Find an adapter by name */
+  def findAdapter(name: String): Option[Adapter] =
+    adapters.find(_.name == name)
+      .orElse(subModules.flatMap(_.findAdapter(name)).headOption)
 }
 
 /**
@@ -92,4 +106,12 @@ case class Project(
   /** Get all port implementations across all modules */
   def allPortImplementations: List[PortImplementation] =
     allModules.flatMap(_.portImplementations)
+
+  /** Get all services across all modules */
+  def allServices: List[Service] =
+    allModules.flatMap(_.services)
+
+  /** Get all adapters across all modules */
+  def allAdapters: List[Adapter] =
+    allModules.flatMap(_.adapters)
 }
