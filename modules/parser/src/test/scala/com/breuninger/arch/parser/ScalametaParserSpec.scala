@@ -127,7 +127,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     source.stats should have length 1
 
     val pkg = source.stats.head.asInstanceOf[Pkg]
-    pkg.body should have length 2 // Import + Trait
+    pkg.body.length shouldBe 2 // Import + Trait
   }
 
   it should "successfully parse a sealed trait hierarchy" in {
@@ -166,7 +166,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     result.isInstanceOf[Parsed.Success[?]] shouldBe true
 
     val traitDefn = result.get.asInstanceOf[Defn.Trait]
-    traitDefn.tparamClause should have length 1
+    traitDefn.tparamClause.length shouldBe 1
     traitDefn.tparamClause.head.name.value shouldBe "A"
   }
 
@@ -534,7 +534,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
     // Should have: import + value object + entity + port
-    pkg.body should have length 4
+    pkg.body.length shouldBe 4
 
     val imports = pkg.body.collect { case i: Import => i }
     imports should have length 1
@@ -574,7 +574,7 @@ class ScalametaParserSpec extends AnyFlatSpec with Matchers {
     val pkg = source.stats.head.asInstanceOf[Pkg]
 
     // Should have sealed trait + 3 case classes + 1 case object
-    pkg.body should have length 5
+    pkg.body.length shouldBe 5
 
     val sealedTrait = pkg.body.head.asInstanceOf[Defn.Trait]
     sealedTrait.mods.exists { case Mod.Sealed() => true; case _ => false } shouldBe true

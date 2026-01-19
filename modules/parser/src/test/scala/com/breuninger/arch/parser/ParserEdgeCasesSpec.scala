@@ -95,7 +95,7 @@ class ParserEdgeCasesSpec extends AnyFlatSpec with Matchers {
 
     result.isInstanceOf[Parsed.Success[?]] shouldBe true
     val tree = result.get.asInstanceOf[Defn.Trait]
-    tree.tparamClause should have length 2
+    tree.tparamClause.length shouldBe 2
   }
 
   it should "handle type parameter bounds" in {

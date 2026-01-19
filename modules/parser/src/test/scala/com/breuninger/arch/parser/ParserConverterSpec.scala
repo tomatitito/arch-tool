@@ -289,9 +289,9 @@ class ParserConverterSpec extends AnyFlatSpec with Matchers {
     val tree = code.parse[Stat].get.asInstanceOf[Defn.Trait]
     val method = tree.templ.body.stats.collect { case m: Decl.Def => m }.head
 
-    method.paramClauses should have length 2
-    method.paramClauses(0) should have length 1
-    method.paramClauses(1) should have length 1
+    method.paramClauses.length shouldBe 2
+    method.paramClauses(0).length shouldBe 1
+    method.paramClauses(1).length shouldBe 1
   }
 
   // ============================================================================
