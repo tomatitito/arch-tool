@@ -1,0 +1,301 @@
+(* ============================================================================
+   Hexagonal Architecture Grammar (Extended Backus-Naur Form)
+   ISO/IEC 14977:1996 Standard
+
+   This grammar describes the abstract structure of hexagonal architecture
+   (ports and adapters pattern) independent of any programming language.
+
+   For language-specific mappings, see ARCHITECTURE_GRAMMAR.md
+   ============================================================================ *)
+
+(* ===== TOP-LEVEL SYSTEM ===== *)
+
+System = "system", "{", SystemDefinition, "}" ;
+
+SystemDefinition =
+    "name", Identifier,
+    "layers", "{", Domain, Application, Ports, "}" ;
+
+
+(* ===== DOMAIN LAYER ===== *)
+
+Domain = "domain", "{", DomainContent, "}" ;
+
+DomainContent = PortDefinition*, DomainModel* ;
+
+(* Port: Interface defining a contract *)
+PortDefinition =
+    "port", Identifier, "{",
+        "package", PackagePath,
+        "methods", "{", Method*, "}",
+    "}" ;
+
+Method =
+    "name", Identifier,
+    "params", "{", Parameter*, "}",
+    "returns", Type ;
+
+Parameter =
+    "name", Identifier,
+    "type", Type ;
+
+(* Domain Models *)
+DomainModel = ValueObject | Entity | Aggregate | Enumeration ;
+
+ValueObject =
+    "value_object", Identifier, "{",
+        "package", PackagePath,
+        "fields", "{", Field+, "}",
+    "}" ;
+
+Entity =
+    "entity", Identifier, "{",
+        "package", PackagePath,
+        "fields", "{", Field+, "}",
+        [ "invariants", "{", Invariant*, "}" ],
+    "}" ;
+
+Aggregate =
+    "aggregate", Identifier, "{",
+        "package", PackagePath,
+        "fields", "{", Field+, "}",
+        "invariants", "{", Invariant+, "}",
+    "}" ;
+
+Enumeration =
+    "enumeration", Identifier, "{",
+        "package", PackagePath,
+        "variants", "{", Variant+, "}",
+    "}" ;
+
+Field =
+    "name", Identifier,
+    "type", Type ;
+
+Variant =
+    "name", Identifier,
+    [ "fields", "{", Field*, "}" ] ;
+
+Invariant =
+    "constraint", String,
+    "description", String ;
+
+
+(* ===== APPLICATION LAYER ===== *)
+
+Application = "application", "{", Service*, "}" ;
+
+Service =
+    "service", Identifier, "{",
+        "package", PackagePath,
+        "dependencies", "{", PortReference+, "}",
+        "methods", "{", Method*, "}",
+    "}" ;
+
+PortReference =
+    "port", Identifier,
+    [ "as", Identifier ] ;
+
+
+(* ===== PORTS LAYER (ADAPTERS) ===== *)
+
+Ports = "ports", "{", Adapter*, "}" ;
+
+Adapter = PersistenceAdapter | MessagingAdapter | RestAdapter ;
+
+PersistenceAdapter =
+    "persistence_adapter", Identifier, "{",
+        "package", PackagePath,
+        "implements", Identifier,
+        "dependency", DatabaseDependency,
+    "}" ;
+
+MessagingAdapter =
+    "messaging_adapter", Identifier, "{",
+        "package", PackagePath,
+        "implements", Identifier,
+        "dependency", MessageQueueDependency,
+    "}" ;
+
+RestAdapter =
+    "rest_adapter", Identifier, "{",
+        "package", PackagePath,
+        "implements", Identifier,
+        "dependency", HttpDependency,
+    "}" ;
+
+DatabaseDependency =
+    "MongoCollection", [ "<", Type, ">" ]
+    | "PostgresConnection"
+    | "RedisClient"
+    | String ;
+
+MessageQueueDependency =
+    "KafkaProducer", [ "<", Type, ">" ]
+    | "KafkaConsumer", [ "<", Type, ">" ]
+    | "RabbitMQChannel"
+    | String ;
+
+HttpDependency =
+    "HttpRoutes"
+    | "RestController"
+    | String ;
+
+
+(* ===== TYPE SYSTEM ===== *)
+
+Type = PrimitiveType | DomainType | GenericType | EffectType | TaggedType ;
+
+PrimitiveType =
+    "String" | "Int" | "Long" | "Double" | "Float"
+    | "Boolean" | "Byte" | "Short" | "Char" ;
+
+DomainType = QualifiedIdentifier ;
+
+GenericType =
+    Identifier, "<", TypeList, ">" ;
+
+TypeList = Type, { ",", Type } ;
+
+EffectType =
+    EffectConstructor, "<", Type, ">" ;
+
+EffectConstructor =
+    "Effect" | "IO" | "Async" | "Task" | "Future" ;
+
+TaggedType =
+    Type, "tagged", TypeTag ;
+
+TypeTag = Identifier, "Tag" ;
+
+
+(* ===== DEPENDENCY INJECTION ===== *)
+
+DependencyInjection = "modules", "{", Module+, "}" ;
+
+Module =
+    "module", Identifier, "{",
+        "package", PackagePath,
+        [ "includes", "{", ModuleReference*, "}" ],
+        "provides", "{", Binding*, "}",
+    "}" ;
+
+ModuleReference = Identifier ;
+
+Binding =
+    "bind", Type,
+    "to", Identifier,
+    [ "singleton" | "prototype" | "scoped" ] ;
+
+
+(* ===== ARCHITECTURAL CONSTRAINTS ===== *)
+
+(* These are semantic rules enforced by the validator, not syntactic rules *)
+
+(* Rule 1: Dependency Direction
+   Application → Domain ← Ports
+   Enforced by validating imports/dependencies *)
+
+(* Rule 2: Port Implementation
+   Every Port must have at least one Adapter implementation *)
+
+(* Rule 3: Layer Isolation
+   - domain/ has no dependencies on ports/ or application/
+   - application/ depends on domain/, not on ports/
+   - ports/ depends on domain/, not on application/ *)
+
+(* Rule 4: Type Safety
+   Port methods must use only Domain types, never infrastructure types *)
+
+(* Rule 5: Module Composition
+   RootModule includes ApplicationModule and PortModule
+   Dependency injection follows layer hierarchy *)
+
+
+(* ===== LEXICAL ELEMENTS ===== *)
+
+Identifier = Letter, { Letter | Digit | "_" } ;
+
+QualifiedIdentifier =
+    Identifier, { ".", Identifier } ;
+
+PackagePath =
+    Identifier, { ".", Identifier } ;
+
+String =
+    '"', { Character - '"' }, '"' ;
+
+Letter =
+    "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+    | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+    | "U" | "V" | "W" | "X" | "Y" | "Z"
+    | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+    | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+    | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+Digit =
+    "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+Character = ? any printable character ? ;
+
+
+(* ===== CONCRETE SYNTAX EXTENSIONS ===== *)
+
+(* Scala-specific constructs *)
+ScalaPort = "trait", Identifier, "{", ScalaMethod+, "}" ;
+
+ScalaMethod = "def", Identifier, "(", ScalaParameterList, ")", ":", ScalaType ;
+
+ScalaParameterList = [ ScalaParameter, { ",", ScalaParameter } ] ;
+
+ScalaParameter = Identifier, ":", ScalaType ;
+
+ScalaType =
+    QualifiedIdentifier
+    | ScalaType, "[", TypeList, "]"
+    | ScalaType, "@@", TypeTag ;
+
+ScalaValueObject =
+    "case", "class", Identifier, "(", Field, ")", "extends", "AnyVal" ;
+
+ScalaEntity =
+    "case", "class", Identifier, "(", FieldList, ")" ;
+
+ScalaEnumeration =
+    ( "sealed", "trait", Identifier )
+    | ( "enum", Identifier ) ;
+
+FieldList = Field, { ",", Field } ;
+
+
+(* Kotlin-specific constructs *)
+KotlinPort = "interface", Identifier, "{", KotlinMethod+, "}" ;
+
+KotlinMethod =
+    [ "suspend" ], "fun", Identifier, "(", KotlinParameterList, ")", ":", KotlinType ;
+
+KotlinParameterList = [ KotlinParameter, { ",", KotlinParameter } ] ;
+
+KotlinParameter = Identifier, ":", KotlinType ;
+
+KotlinType =
+    QualifiedIdentifier
+    | QualifiedIdentifier, "<", TypeList, ">"
+    | KotlinType, "?" ;
+
+KotlinValueObject =
+    "@JvmInline", "value", "class", Identifier, "(", "val", Field, ")" ;
+
+KotlinEntity =
+    "data", "class", Identifier, "(", KotlinFieldList, ")" ;
+
+KotlinFieldList = KotlinField, { ",", KotlinField } ;
+
+KotlinField = "val", Identifier, ":", Type ;
+
+KotlinEnumeration =
+    ( "sealed", "interface", Identifier )
+    | ( "enum", "class", Identifier ) ;
+
+
+(* ===== END OF GRAMMAR ===== *)

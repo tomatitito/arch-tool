@@ -1,5 +1,7 @@
 # Formal Grammar for Hexagonal Architecture
 
+> **Note**: The formal EBNF grammar specification is available in [`architecture-grammar.ebnf`](./architecture-grammar.ebnf). This document provides explanations, examples, and language-specific mappings.
+
 ## Overview
 
 This document defines a formal, language-agnostic grammar for describing the hexagonal architecture (ports and adapters pattern) used in the produkt-assembler codebase. By separating abstract architectural concepts from concrete language syntax, this grammar enables:

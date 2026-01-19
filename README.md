@@ -14,7 +14,7 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 ### Want to Understand the Approach?
 
 **Read next**: [ARCHITECTURE_GRAMMAR.md](ARCHITECTURE_GRAMMAR.md) (15 min read)
-- Formal grammar specification
+- Formal grammar specification ([architecture-grammar.ebnf](architecture-grammar.ebnf))
 - Language-agnostic architectural concepts
 - Type mappings and validation rules
 - Complete migration strategy overview
@@ -60,7 +60,7 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 │   └── Quick reference: What's automated vs manual
 │
 ├── 📐 ARCHITECTURE_GRAMMAR.md         ← Core Concepts
-│   ├── Formal grammar specification
+│   ├── Formal grammar specification (see architecture-grammar.ebnf)
 │   ├── Hexagonal architecture patterns
 │   ├── Type mappings (Scala ↔ Kotlin)
 │   └── Migration strategy
