@@ -1,100 +1,10 @@
 # Agent Documentation
 
-## Issue Tracking with bd (beads)
+## Issue Tracking
 
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+This project uses **bd (beads)** for issue tracking. Use the `/beads` skill for full documentation on creating, updating, and managing issues.
 
-### Why bd?
-
-- Dependency-aware: Track blockers and relationships between issues
-- Git-friendly: Auto-syncs to JSONL for version control
-- Agent-optimized: JSON output, ready work detection, discovered-from links
-- Prevents duplicate tracking systems and confusion
-
-### Quick Start
-
-**Check for ready work:**
-```bash
-bd ready --json
-```
-
-**Create new issues:**
-```bash
-bd create "Issue title" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" -p 1 --deps discovered-from:bd-123 --json
-bd create "Subtask" --parent <epic-id> --json  # Hierarchical subtask (gets ID like epic-id.1)
-```
-
-**Claim and update:**
-```bash
-bd update bd-42 --status in_progress --json
-bd update bd-42 --priority 1 --json
-```
-
-**Complete work:**
-```bash
-bd close bd-42 --reason "Completed" --json
-```
-
-### Issue Types
-
-- `bug` - Something broken
-- `feature` - New functionality
-- `task` - Work item (tests, docs, refactoring)
-- `epic` - Large feature with subtasks
-- `chore` - Maintenance (dependencies, tooling)
-
-### Priorities
-
-- `0` - Critical (security, data loss, broken builds)
-- `1` - High (major features, important bugs)
-- `2` - Medium (default, nice-to-have)
-- `3` - Low (polish, optimization)
-- `4` - Backlog (future ideas)
-
-### Workflow for AI Agents
-
-1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task**: `bd update <id> --status in_progress`
-3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
-6. **Commit together**: Always commit the `.beads/issues.jsonl` file together with the code changes so issue state stays in sync with code state
-
-### Auto-Sync
-
-bd automatically syncs with git:
-- Exports to `.beads/issues.jsonl` after changes (5s debounce)
-- Imports from JSONL when newer (e.g., after `git pull`)
-- No manual export/import needed!
-
-### GitHub Copilot Integration
-
-If using GitHub Copilot, also create `.github/copilot-instructions.md` for automatic instruction loading.
-Run `bd onboard` to get the content, or see step 2 of the onboard instructions.
-
-### MCP Server (Recommended)
-
-If using Claude or MCP-compatible clients, install the beads MCP server:
-
-```bash
-pip install beads-mcp
-```
-
-Add to MCP config (e.g., `~/.config/claude/config.json`):
-```json
-{
-  "beads": {
-    "command": "beads-mcp",
-    "args": []
-  }
-}
-```
-
-Then use `mcp__beads__*` functions instead of CLI commands.
-
-### Managing AI-Generated Planning Documents
+## Managing AI-Generated Planning Documents
 
 AI assistants often create planning and design documents during development:
 - PLAN.md, IMPLEMENTATION.md, ARCHITECTURE.md
@@ -116,31 +26,11 @@ history/
 ```
 
 **Benefits:**
-- ✅ Clean repository root
-- ✅ Clear separation between ephemeral and permanent documentation
-- ✅ Easy to exclude from version control if desired
-- ✅ Preserves planning history for archeological research
-- ✅ Reduces noise when browsing the project
-
-### CLI Help
-
-Run `bd <command> --help` to see all available flags for any command.
-For example: `bd create --help` shows `--parent`, `--deps`, `--assignee`, etc.
-
-### Important Rules
-
-- ✅ Use bd for ALL task tracking
-- ✅ Always use `--json` flag for programmatic use
-- ✅ Link discovered work with `discovered-from` dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
-- ✅ Store AI planning docs in `history/` directory
-- ✅ Run `bd <cmd> --help` to discover available flags
-- ❌ Do NOT create markdown TODO lists
-- ❌ Do NOT use external issue trackers
-- ❌ Do NOT duplicate tracking systems
-- ❌ Do NOT clutter repo root with planning documents
-
-For more details, see README.md and QUICKSTART.md.
+- Clean repository root
+- Clear separation between ephemeral and permanent documentation
+- Easy to exclude from version control if desired
+- Preserves planning history for archeological research
+- Reduces noise when browsing the project
 
 ## Landing the Plane
 
@@ -306,70 +196,6 @@ Common pitfalls
 - "FILE_RESERVATION_CONFLICT": adjust patterns, wait for expiry, or use a non-exclusive reservation when appropriate.
 - Auth errors: if JWT+JWKS is enabled, include a bearer token with a `kid` that matches server JWKS; static bearer is used only when JWT is disabled.
 
-## 🔎 cass — Search All Your Agent History
+## Agent History Search
 
- What: cass indexes conversations from Claude Code, Codex, Cursor, Gemini, Aider, ChatGPT, and more into a unified, searchable index. Before solving a problem from scratch, check if any agent already solved something similar.
-
- ⚠️ NEVER run bare cass — it launches an interactive TUI. Always use --robot or --json.
-
- Quick Start
-
- # Check if index is healthy (exit 0=ok, 1=run index first)
- cass health
-
- # Search across all agent histories
- cass search "authentication error" --robot --limit 5
-
- # View a specific result (from search output)
- cass view /path/to/session.jsonl -n 42 --json
-
- # Expand context around a line
- cass expand /path/to/session.jsonl -n 42 -C 3 --json
-
- # Learn the full API
- cass capabilities --json # Feature discovery
- cass robot-docs guide # LLM-optimized docs
-
- Why Use It
-
- - Cross-agent knowledge: Find solutions from Codex when using Claude, or vice versa
- - Forgiving syntax: Typos and wrong flags are auto-corrected with teaching notes
- - Token-efficient: --fields minimal returns only essential data
-
- Key Flags
-
- | Flag | Purpose |
- |------------------|--------------------------------------------------------|
- | --robot / --json | Machine-readable JSON output (required!) |
- | --fields minimal | Reduce payload: source_path, line_number, agent only |
- | --limit N | Cap result count |
- | --agent NAME | Filter to specific agent (claude, codex, cursor, etc.) |
- | --days N | Limit to recent N days |
-
- stdout = data only, stderr = diagnostics. Exit 0 = success.
- 
- ## Memory System: cass-memory
- 
- The Cass Memory System (cm) is a tool for giving agents an effective memory based on the ability to quickly search across previous coding agent sessions across an array of different coding agent tools (e.g., Claude Code, Codex, Gemini-CLI, Cursor, etc) and projects (and even across multiple machines, optionally) and then reflect on what they find and learn in new sessions to draw out useful lessons and takeaways; these lessons are then stored and can be queried and retrieved later, much like how human memory works.
- 
- The `cm onboard` command guides you through analyzing historical sessions and extracting valuable rules.
- 
- ### Quick Start
- 
- ```bash
- # 1. Check status and see recommendations
- cm onboard status
- 
- # 2. Get sessions to analyze (filtered by gaps in your playbook)
- cm onboard sample --fill-gaps
- 
- # 3. Read a session with rich context
- cm onboard read /path/to/session.jsonl --template
- 
- # 4. Add extracted rules (one at a time or batch)
- cm playbook add "Your rule content" --category "debugging"
- # Or batch add:
- cm playbook add --file rules.json
- 
- # 5. Mark session as processed
- cm onboard mark-done /path/to/session.jsonl
+This project supports **cass** for searching agent conversation history. Use the `/cass` skill for full documentation on searching past sessions, viewing results, and using the memory system.
