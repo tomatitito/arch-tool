@@ -237,7 +237,7 @@ object Main {
 
     println(s"Parsing: ${cmd.inputPath}")
 
-    val pipeline = DefaultMigrationPipeline.createStub()
+    val pipeline = DefaultMigrationPipeline.create()
     pipeline.parser.parseFile(cmd.inputPath) match {
       case Right(result) =>
         println("\n=== Parse Result ===\n")
@@ -284,7 +284,7 @@ object Main {
       println("Strict mode: warnings will be treated as errors")
     }
 
-    val pipeline = DefaultMigrationPipeline.createStub()
+    val pipeline = DefaultMigrationPipeline.create()
     pipeline.parser.parseFile(cmd.inputPath) match {
       case Right(parseResult) =>
         val validationResult = pipeline.validator.validate(
@@ -349,7 +349,7 @@ object Main {
       println("Validation skipped")
     }
 
-    val pipeline = DefaultMigrationPipeline.createStub()
+    val pipeline = DefaultMigrationPipeline.create()
     val config = MigrationConfig(
       skipValidation = cmd.skipValidation,
       renderConfig = com.breuninger.arch.renderer.RenderConfig(),
@@ -427,7 +427,7 @@ object Main {
 
     println(s"Found ${scalaFiles.size} Scala file(s) to migrate")
 
-    val pipeline = DefaultMigrationPipeline.createStub()
+    val pipeline = DefaultMigrationPipeline.create()
     val config = MigrationConfig(
       skipValidation = cmd.skipValidation,
       renderConfig = com.breuninger.arch.renderer.RenderConfig(),

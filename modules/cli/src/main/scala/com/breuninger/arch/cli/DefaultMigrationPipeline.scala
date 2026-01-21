@@ -7,6 +7,10 @@ import com.breuninger.arch.validator._
 import java.nio.file.{Path, Files}
 import scala.util.Try
 
+// Import implementations
+import com.breuninger.arch.parser.ScalametaParser
+import com.breuninger.arch.validator.DefaultArchitectureValidator
+
 /**
  * Default implementation of MigrationPipeline
  *
@@ -118,8 +122,19 @@ class DefaultMigrationPipeline(
  */
 object DefaultMigrationPipeline {
   /**
+   * Create a pipeline with real implementations
+   */
+  def create(): DefaultMigrationPipeline = {
+    new DefaultMigrationPipeline(
+      parser = new ScalametaParser(),
+      validator = new DefaultArchitectureValidator(),
+      renderer = KotlinRenderer
+    )
+  }
+
+  /**
    * Create a pipeline with stub implementations
-   * (to be replaced with real implementations later)
+   * (for testing or when implementations are not available)
    */
   def createStub(): DefaultMigrationPipeline = {
     new DefaultMigrationPipeline(
