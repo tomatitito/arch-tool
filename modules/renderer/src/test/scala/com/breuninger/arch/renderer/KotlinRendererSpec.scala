@@ -71,7 +71,7 @@ class KotlinRendererSpec extends AnyFlatSpec with Matchers {
     kotlinCode should include("interface BestandRepository")
   }
 
-  it should "generate correct data class from ValueObject" in {
+  it should "generate correct value class from single-property ValueObject" in {
     val valueObject = DomainModel.ValueObject(
       name = "ArtikelId",
       packageName = "com.breuninger.domain.model",
@@ -81,7 +81,8 @@ class KotlinRendererSpec extends AnyFlatSpec with Matchers {
     val kotlinCode = KotlinRenderer.renderDomainModel(valueObject)
 
     kotlinCode should include("package com.breuninger.domain.model")
-    kotlinCode should include("data class ArtikelId")
+    kotlinCode should include("@JvmInline")
+    kotlinCode should include("value class ArtikelId")
     kotlinCode should include("val value: String")
   }
 
@@ -259,7 +260,8 @@ class KotlinRendererSpec extends AnyFlatSpec with Matchers {
 
     val kotlinCode = KotlinRenderer.renderDomainModel(valueObjectInt)
 
-    kotlinCode should include("data class Count")
+    kotlinCode should include("@JvmInline")
+    kotlinCode should include("value class Count")
     kotlinCode should include("val value: Int")
   }
 

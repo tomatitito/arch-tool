@@ -52,7 +52,7 @@ class RendererIntegrationSpec extends AnyFlatSpec with Matchers {
     kotlinCode should include("interface BestandRepository")
   }
 
-  it should "generate a complete domain model file with value object" in {
+  it should "generate a complete domain model file with single-property value object" in {
     val valueObject = DomainModel.ValueObject(
       name = "ArtikelId",
       packageName = "com.breuninger.domain.model",
@@ -64,8 +64,9 @@ class RendererIntegrationSpec extends AnyFlatSpec with Matchers {
     // Verify package declaration
     kotlinCode should startWith regex "package com\\.breuninger\\.domain\\.model"
 
-    // Verify data class with properties
-    kotlinCode should include("data class ArtikelId")
+    // Single-property value objects should use @JvmInline value class (Kotlin equivalent of Scala AnyVal)
+    kotlinCode should include("@JvmInline")
+    kotlinCode should include("value class ArtikelId")
     kotlinCode should include("val value: String")
 
     // Verify no Scala syntax

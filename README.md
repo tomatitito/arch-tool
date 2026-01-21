@@ -280,7 +280,7 @@ modules/
 
 ## Project Status
 
-This is a **design and planning repository**. The actual implementation is tracked separately.
+This is a **functional implementation**. The tool can be used to migrate Scala files to Kotlin.
 
 ### Current Phase
 
@@ -290,19 +290,20 @@ This is a **design and planning repository**. The actual implementation is track
 - Tool architecture designed
 - Test strategy planned
 
-**Phase 2: POC Implementation** 🚧 In Progress
+**Phase 2: POC Implementation** ✅ Complete
 - ✅ Module structure and boundaries defined
 - ✅ Abstract model (IR) contracts
 - ✅ Public APIs for parser, renderer, validator
 - ✅ Automated boundary enforcement
-- ⏳ Scalameta parser implementation
-- ⏳ KotlinPoet renderer implementation
-- ⏳ Architectural validator implementation
+- ✅ Scalameta parser implementation
+- ✅ KotlinRenderer implementation
+- ✅ Architectural validator implementation
+- ✅ CLI with parse, validate, migrate, migrate-batch commands
 
-**Phase 3: Production Tool** ⏳ Planned
-- Spring Boot support
-- Batch migration
-- CLI tool
+**Phase 3: Production Enhancements** ⏳ Planned
+- Spring Boot annotations (@Repository, @Service, @RestController)
+- Adapter skeleton generation
+- Multi-file consolidation (single package per output file)
 - CI/CD integration
 
 ---
@@ -452,17 +453,28 @@ java -jar modules/cli/target/scala-3.7.4/arch-tool.jar migrate-batch \
 
 ### Current Implementation Status
 
-**Note**: The CLI infrastructure is complete, but the core parsers and renderers are stub implementations:
+The tool is fully functional with all core components implemented:
 
 - ✅ CLI argument parsing (scopt)
 - ✅ Command execution framework
 - ✅ Pipeline orchestration
 - ✅ File I/O and batch processing
-- ⏳ ScalaParser (stub - returns "not implemented")
-- ⏳ KotlinRenderer (stub - generates basic structure)
-- ⏳ ArchitectureValidator (stub - always passes)
+- ✅ ScalaParser (Scalameta-based) - parses value objects, entities, sealed hierarchies, enums, ports
+- ✅ KotlinRenderer - generates Kotlin code with proper type mappings
+- ✅ ArchitectureValidator - validates domain models and ports
 
-The tool structure is ready, and actual parser/renderer implementations can be added incrementally.
+#### Supported Migrations
+
+| Scala | Kotlin |
+|-------|--------|
+| `case class X(v: T) extends AnyVal` | `@JvmInline value class X(val v: T)` |
+| `case class X(...)` | `data class X(...)` |
+| `trait X` (port) | `interface X` |
+| `sealed trait X` with `case class` variants | `sealed interface X` with `data class` subtypes |
+| `sealed trait X` with `case object` variants only | `enum class X` |
+| `def m(): IO[A]` | `suspend fun m(): A` |
+| `Option[A]` | `A?` |
+| `List[A]` | `List<A>` |
 
 ---
 
