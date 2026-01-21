@@ -4,16 +4,18 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 
 ## Quick Start
 
+**📚 Full Documentation**: See [specs/README.md](specs/README.md) for complete specification index
+
 ### New to This Project?
 
-**Start here**: [TOOL_SCOPE_SUMMARY.md](TOOL_SCOPE_SUMMARY.md) (5 min read)
+**Start here**: [specs/TOOL_SCOPE_SUMMARY.md](specs/TOOL_SCOPE_SUMMARY.md) (5 min read)
 - What's automated vs. manual
 - Time savings and value proposition
 - Quick reference tables
 
 ### Want to Understand the Approach?
 
-**Read next**: [ARCHITECTURE_GRAMMAR.md](ARCHITECTURE_GRAMMAR.md) (15 min read)
+**Read next**: [specs/ARCHITECTURE_GRAMMAR.md](specs/ARCHITECTURE_GRAMMAR.md) (15 min read)
 - Formal grammar specification ([architecture-grammar.ebnf](architecture-grammar.ebnf))
 - Language-agnostic architectural concepts
 - Type mappings and validation rules
@@ -21,7 +23,7 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 
 ### Ready to Build the Tool?
 
-**Implementation guide**: [PLAN_GRAMMAR_POC.md](PLAN_GRAMMAR_POC.md) (30 min read)
+**Implementation guide**: [specs/PLAN_GRAMMAR_POC.md](specs/PLAN_GRAMMAR_POC.md) (30 min read)
 - Step-by-step POC implementation
 - Abstract model (IR) design
 - Parser and renderer architecture
@@ -30,12 +32,12 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 ### Need API Documentation?
 
 **Library references**:
-- [KOTLINPOET_EXAMPLES.md](KOTLINPOET_EXAMPLES.md) - KotlinPoet code generation API
-- [SCALAMETA_OUTPUT_EXAMPLES.md](SCALAMETA_OUTPUT_EXAMPLES.md) - Scalameta parser output format
+- [specs/KOTLINPOET_EXAMPLES.md](specs/KOTLINPOET_EXAMPLES.md) - KotlinPoet code generation API
+- [specs/SCALAMETA_OUTPUT_EXAMPLES.md](specs/SCALAMETA_OUTPUT_EXAMPLES.md) - Scalameta parser output format
 
 ### Migrating to Spring Boot?
 
-**Framework integration**: [SPRING_BOOT_MIGRATION.md](SPRING_BOOT_MIGRATION.md)
+**Framework integration**: [specs/SPRING_BOOT_MIGRATION.md](specs/SPRING_BOOT_MIGRATION.md)
 - Spring annotations and stereotypes
 - Dependency injection patterns
 - Updated type mappings
@@ -43,7 +45,7 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 
 ### Building Tests?
 
-**Quality assurance**: [TEST_DRIVEN_MIGRATION.md](TEST_DRIVEN_MIGRATION.md)
+**Quality assurance**: [specs/TEST_DRIVEN_MIGRATION.md](specs/TEST_DRIVEN_MIGRATION.md)
 - Contract tests for behavioral equivalence
 - Integration testing with Testcontainers
 - Property-based testing
@@ -53,8 +55,10 @@ A formal grammar tool for migrating Scala microservices to Kotlin + Spring Boot 
 
 ## Documentation Map
 
+All specifications are in the [specs/](specs/) directory. See [specs/README.md](specs/README.md) for the complete index.
+
 ```
-📚 Documentation Structure
+📚 Documentation Structure (specs/)
 │
 ├── 🎯 TOOL_SCOPE_SUMMARY.md          ← START HERE
 │   └── Quick reference: What's automated vs manual
@@ -269,8 +273,8 @@ modules/
 ```
 
 **Documentation**:
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Module boundaries and contracts
-- [MODULE_CONTRACTS.md](MODULE_CONTRACTS.md) - Enforcement rules and validation
+- [specs/ARCHITECTURE.md](specs/ARCHITECTURE.md) - Module boundaries and contracts
+- [specs/MODULE_CONTRACTS.md](specs/MODULE_CONTRACTS.md) - Enforcement rules and validation
 
 ---
 
@@ -317,43 +321,164 @@ This is a **design and planning repository**. The actual implementation is track
 
 ---
 
-## Usage (Planned)
+## Usage
+
+### Building the CLI
 
 ```bash
-# Parse Scala and show abstract model
-./arch-tool parse -i src/main/scala/domain/repository/BestandRepository.scala
+# Compile the project
+sbt compile
 
-# Validate architectural constraints
-./arch-tool validate -i src/main/scala
+# Run tests
+sbt test
 
-# Migrate Scala to Kotlin
-./arch-tool migrate \
-  -i src/main/scala/domain/repository/BestandRepository.scala \
-  -o src/main/kotlin/domain/repository/BestandRepository.kt \
-  --spring-boot
+# Build standalone JAR
+sbt cli/assembly
 
-# Batch migration
-./arch-tool migrate-batch \
-  --scala-root src/main/scala \
-  --kotlin-root src/main/kotlin \
-  --preserve-structure
+# The JAR will be at: modules/cli/target/scala-3.7.4/arch-tool.jar
 ```
+
+### CLI Commands
+
+#### Help and Version
+
+```bash
+# Show help
+sbt "cli/run help"
+# or with the JAR:
+java -jar arch-tool.jar help
+
+# Show version
+sbt "cli/run version"
+```
+
+#### Parse Command
+
+Parse Scala source code and display the intermediate representation (IR):
+
+```bash
+# Parse a file
+sbt "cli/run parse src/main/scala/domain/repository/BestandRepository.scala"
+
+# Parse with verbose output
+sbt "cli/run parse src/main/scala/domain/UserId.scala --verbose"
+```
+
+**Output**: Shows parsed domain models and ports with their types.
+
+#### Validate Command
+
+Validate Scala source against architectural rules:
+
+```bash
+# Validate a file
+sbt "cli/run validate src/main/scala/ports/UserRepository.scala"
+
+# Validate in strict mode (warnings as errors)
+sbt "cli/run validate src/main/scala/domain/User.scala --strict"
+```
+
+**Output**: Reports validation errors and warnings.
+
+#### Migrate Command
+
+Migrate a single Scala file to Kotlin:
+
+```bash
+# Migrate a single file
+sbt "cli/run migrate \
+  src/main/scala/domain/repository/BestandRepository.scala \
+  src/main/kotlin/domain/repository/BestandRepository.kt"
+
+# Skip validation during migration
+sbt "cli/run migrate \
+  src/main/scala/domain/User.scala \
+  src/main/kotlin/domain/User.kt \
+  --skip-validation"
+```
+
+**Output**: Generated Kotlin file with equivalent code structure.
+
+#### Migrate Batch Command
+
+Migrate an entire directory of Scala files to Kotlin:
+
+```bash
+# Migrate a directory
+sbt "cli/run migrate-batch \
+  src/main/scala/domain \
+  src/main/kotlin/domain"
+
+# Migrate with validation skipped
+sbt "cli/run migrate-batch \
+  src/main/scala \
+  src/main/kotlin \
+  --skip-validation"
+
+# Migrate sequentially (not in parallel)
+sbt "cli/run migrate-batch \
+  src/main/scala \
+  src/main/kotlin \
+  --sequential"
+```
+
+**Features**:
+- Preserves directory structure
+- Converts `.scala` files to `.kt` files
+- Processes files in parallel by default
+- Reports progress and summary
+
+### Using the Standalone JAR
+
+After building with `sbt cli/assembly`:
+
+```bash
+# Parse
+java -jar modules/cli/target/scala-3.7.4/arch-tool.jar parse Domain.scala
+
+# Validate
+java -jar modules/cli/target/scala-3.7.4/arch-tool.jar validate Domain.scala --strict
+
+# Migrate single file
+java -jar modules/cli/target/scala-3.7.4/arch-tool.jar migrate \
+  input.scala \
+  output.kt
+
+# Migrate directory
+java -jar modules/cli/target/scala-3.7.4/arch-tool.jar migrate-batch \
+  src/main/scala/domain \
+  src/main/kotlin/domain
+```
+
+### Current Implementation Status
+
+**Note**: The CLI infrastructure is complete, but the core parsers and renderers are stub implementations:
+
+- ✅ CLI argument parsing (scopt)
+- ✅ Command execution framework
+- ✅ Pipeline orchestration
+- ✅ File I/O and batch processing
+- ⏳ ScalaParser (stub - returns "not implemented")
+- ⏳ KotlinRenderer (stub - generates basic structure)
+- ⏳ ArchitectureValidator (stub - always passes)
+
+The tool structure is ready, and actual parser/renderer implementations can be added incrementally.
 
 ---
 
 ## Contributing
 
 ### For Architects
-Read [ARCHITECTURE_GRAMMAR.md](ARCHITECTURE_GRAMMAR.md) to understand the conceptual model.
+Read [specs/ARCHITECTURE_GRAMMAR.md](specs/ARCHITECTURE_GRAMMAR.md) to understand the conceptual model.
 
 ### For Developers
-Follow [PLAN_GRAMMAR_POC.md](PLAN_GRAMMAR_POC.md) to implement tool components.
+Follow [specs/PLAN_GRAMMAR_POC.md](specs/PLAN_GRAMMAR_POC.md) to implement tool components.
 
 ### For Testers
-Use [TEST_DRIVEN_MIGRATION.md](TEST_DRIVEN_MIGRATION.md) to build the test suite.
+Use [specs/TEST_DRIVEN_MIGRATION.md](specs/TEST_DRIVEN_MIGRATION.md) to build the test suite.
 
 ### For Spring Developers
-Consult [SPRING_BOOT_MIGRATION.md](SPRING_BOOT_MIGRATION.md) for framework integration.
+Consult [specs/SPRING_BOOT_MIGRATION.md](specs/SPRING_BOOT_MIGRATION.md) for framework integration.
 
 ---
 
