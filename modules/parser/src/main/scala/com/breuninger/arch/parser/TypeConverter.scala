@@ -36,8 +36,8 @@ object TypeConverter {
     case Type.Apply.After_4_6_0(Type.Name("Option"), argClause) =>
       IRType.NullableType(convertType(argClause.values.head))
 
-    // List[A] -> ListType(A)
-    case Type.Apply.After_4_6_0(Type.Name("List" | "Seq" | "Vector"), argClause) =>
+    // List[A], NonEmptyList[A] -> ListType(A)
+    case Type.Apply.After_4_6_0(Type.Name("List" | "Seq" | "Vector" | "NonEmptyList"), argClause) =>
       IRType.ListType(convertType(argClause.values.head))
 
     // Set[A] -> SetType(A)

@@ -20,13 +20,32 @@ object KotlinRenderer {
    * @return Kotlin source code as a string
    */
   def renderPort(port: Port): String = {
-    // TODO: Implement using KotlinPoet
-    // For now, return minimal stub to allow tests to compile
-    s"""package ${port.packageName}
-       |
-       |interface ${port.name} {
-       |}
-       |""".stripMargin
+    val methodsStr = port.methods.map(renderMethod).mkString("\n")
+    val packageLine = if (port.packageName.nonEmpty) s"package ${port.packageName}\n\n" else ""
+
+    if (port.methods.isEmpty) {
+      s"""${packageLine}interface ${port.name} {
+         |}
+         |""".stripMargin
+    } else {
+      s"""${packageLine}interface ${port.name} {
+         |$methodsStr
+         |}
+         |""".stripMargin
+    }
+  }
+
+  /**
+   * Renders a Method to Kotlin code.
+   */
+  private def renderMethod(method: Method): String = {
+    val suspendMod = if (method.isSuspend) "suspend " else ""
+    val paramsStr = method.parameters.map { p =>
+      s"${p.name}: ${renderTypeNameSimple(p.parameterType)}"
+    }.mkString(", ")
+    val returnTypeStr = renderTypeNameSimple(method.returnType)
+
+    s"    ${suspendMod}fun ${method.name}($paramsStr): $returnTypeStr"
   }
 
   /**
@@ -36,21 +55,12 @@ object KotlinRenderer {
    * @return Kotlin source code as a string
    */
   def renderDomainModel(model: DomainModel): String = {
-    // TODO: Implement using KotlinPoet
     model match {
       case vo: DomainModel.ValueObject =>
-        val propsStr = vo.properties.map(p => s"val ${p.name}: ${renderTypeNameSimple(p.propertyType)}").mkString(", ")
-        s"""package ${vo.packageName}
-           |
-           |data class ${vo.name}($propsStr)
-           |""".stripMargin
+        renderDataClass(vo.name, vo.packageName, vo.properties)
 
       case entity: DomainModel.Entity =>
-        val propsStr = entity.properties.map(p => s"val ${p.name}: ${renderTypeNameSimple(p.propertyType)}").mkString(", ")
-        s"""package ${entity.packageName}
-           |
-           |data class ${entity.name}($propsStr)
-           |""".stripMargin
+        renderDataClass(entity.name, entity.packageName, entity.properties)
 
       case hierarchy: DomainModel.SealedHierarchy =>
         s"""package ${hierarchy.packageName}
@@ -65,6 +75,79 @@ object KotlinRenderer {
            |enum class ${enumModel.name} { $valuesStr }
            |""".stripMargin
     }
+  }
+
+  /**
+   * Renders a data class with proper formatting.
+   */
+  private def renderDataClass(name: String, packageName: String, properties: List[Property]): String = {
+    // Collect imports from types used
+    val imports = collectImports(properties.map(_.propertyType))
+    val importsStr = if (imports.nonEmpty) {
+      imports.sorted.map(i => s"import $i").mkString("\n") + "\n\n"
+    } else ""
+
+    val packageLine = if (packageName.nonEmpty) s"package $packageName\n\n" else ""
+
+    if (properties.isEmpty) {
+      s"""${packageLine}${importsStr}data class $name()
+         |""".stripMargin
+    } else if (properties.length == 1) {
+      // Single property - keep on one line
+      val p = properties.head
+      s"""${packageLine}${importsStr}data class $name(val ${p.name}: ${renderTypeNameSimple(p.propertyType)})
+         |""".stripMargin
+    } else {
+      // Multiple properties - format multi-line
+      val propsStr = properties.map { p =>
+        s"    val ${p.name}: ${renderTypeNameSimple(p.propertyType)}"
+      }.mkString(",\n")
+      s"""${packageLine}${importsStr}data class $name(
+         |$propsStr
+         |)
+         |""".stripMargin
+    }
+  }
+
+  /**
+   * Collects required imports from a list of types.
+   */
+  private def collectImports(types: List[Type]): List[String] = {
+    types.flatMap(collectTypeImports).distinct
+  }
+
+  /**
+   * Collects imports required for a single type.
+   */
+  private def collectTypeImports(tpe: Type): List[String] = tpe match {
+    case Type.NamedType(qualifiedName, typeArgs) =>
+      val directImport = qualifiedName match {
+        case "Locale" => Some("java.util.Locale")
+        case "Instant" => Some("java.time.Instant")
+        case "Duration" => Some("java.time.Duration")
+        case "LocalDate" => Some("java.time.LocalDate")
+        case "LocalDateTime" => Some("java.time.LocalDateTime")
+        case "UUID" => Some("java.util.UUID")
+        case _ => None
+      }
+      directImport.toList ++ typeArgs.flatMap(collectTypeImports)
+
+    case Type.NullableType(underlying) =>
+      collectTypeImports(underlying)
+
+    case Type.ListType(elementType) =>
+      collectTypeImports(elementType)
+
+    case Type.SetType(elementType) =>
+      collectTypeImports(elementType)
+
+    case Type.MapType(keyType, valueType) =>
+      collectTypeImports(keyType) ++ collectTypeImports(valueType)
+
+    case Type.FunctionType(paramTypes, returnType) =>
+      paramTypes.flatMap(collectTypeImports) ++ collectTypeImports(returnType)
+
+    case _ => Nil
   }
 
   /**
