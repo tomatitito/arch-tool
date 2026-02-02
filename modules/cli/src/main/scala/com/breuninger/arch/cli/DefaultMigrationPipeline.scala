@@ -118,8 +118,19 @@ class DefaultMigrationPipeline(
  */
 object DefaultMigrationPipeline {
   /**
+   * Create a pipeline with the real ScalametaParser implementation.
+   */
+  def create(): DefaultMigrationPipeline = {
+    new DefaultMigrationPipeline(
+      parser = ScalametaParser(),
+      validator = StubArchitectureValidator,
+      renderer = KotlinRenderer
+    )
+  }
+
+  /**
    * Create a pipeline with stub implementations
-   * (to be replaced with real implementations later)
+   * (kept for backward compatibility with tests)
    */
   def createStub(): DefaultMigrationPipeline = {
     new DefaultMigrationPipeline(
