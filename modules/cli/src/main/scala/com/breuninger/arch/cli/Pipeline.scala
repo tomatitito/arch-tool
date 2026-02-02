@@ -41,6 +41,7 @@ case class MigrationResult(
   outputPath: Path,
   modelsProcessed: Int,
   portsProcessed: Int,
+  servicesProcessed: Int = 0,
   validationResult: Option[ValidationResult]
 )
 

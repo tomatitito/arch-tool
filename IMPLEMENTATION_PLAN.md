@@ -413,3 +413,48 @@ Should contain:
 5. Phase 6 (Packages)
 6. Phase 5 (Sealed Hierarchies)
 7. Phases 7-8 (Polish)
+
+## Golden Test Gaps
+
+### Kafka Adapters (TBD)
+
+The golden test structure for kafka adapters is intentionally incomplete:
+
+| Directory | Purpose | Status |
+|-----------|---------|--------|
+| `input/kafka/` | Scala source (FS2 Kafka) | ✅ Present |
+| `reference/kafka/` | Manual Kotlin port (Spring Kafka) | ✅ Present |
+| `expected/kafka/` | Automated migration output | ❌ Missing (by design) |
+
+**Why `expected/kafka/` is missing:**
+
+1. **Framework migration not supported** - The reference files show a complete rewrite from FS2 Kafka → Spring Kafka. This is a framework migration that the automated tool cannot perform.
+
+2. **Different output expected** - When adapter parsing IS implemented, the expected output should be skeleton files with TODO placeholders, NOT the complete Spring Kafka implementation in `reference/`.
+
+3. **Adapter parsing not implemented** - Phase 4 focuses on ports/traits. Adapter classes (like `GoldenRecordToProduktService`) require additional work beyond the current scope.
+
+**When to add `expected/kafka/`:**
+
+Create `expected/kafka/` files when:
+- Adapter parsing is implemented (detecting `MessageQueueType.KafkaConsumer`, `AdapterType.Messaging`)
+- The tool can extract constructor dependencies and class structure
+- Expected output should be Kotlin skeletons with TODOs for framework-specific logic
+
+**Example expected skeleton (`expected/kafka/GoldenRecordToProduktService.kt`):**
+```kotlin
+package com.breuninger.entdecken.ports.kafka
+
+// TODO: Migrate from FS2 Kafka to Spring Kafka
+// Original: Resource[IO, KafkaConsumer[IO, String, Array[Byte]]]
+class GoldenRecordToProduktService(
+    private val goldenRecordParser: ProduktGoldenRecordParser,
+    private val inactiveProduktFilter: InactiveProduktFilter,
+    private val conversion: Conversion,
+    private val persistence: Persistence,
+    private val retryHelper: RetryHelper,
+) {
+    // TODO: Implement start() - was IO[Unit] with consumer.consumeChunk
+    // TODO: Implement process() - chunk processing with traverse/filter
+}
+```

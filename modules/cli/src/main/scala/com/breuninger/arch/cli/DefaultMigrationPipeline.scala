@@ -66,6 +66,7 @@ class DefaultMigrationPipeline(
         outputPath = outputPath,
         modelsProcessed = parseResult.domainModels.size,
         portsProcessed = parseResult.ports.size,
+        servicesProcessed = parseResult.services.size,
         validationResult = validationResult
       )
     }
@@ -87,6 +88,12 @@ class DefaultMigrationPipeline(
       // Render ports
       parseResult.ports.foreach { port =>
         sb.append(renderer.renderPort(port))
+        sb.append("\n")
+      }
+
+      // Render services
+      parseResult.services.foreach { service =>
+        sb.append(renderer.renderService(service))
         sb.append("\n")
       }
 

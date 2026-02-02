@@ -9,8 +9,8 @@ import scala.util.{Try, Success, Failure}
  * Scalameta-based implementation of ScalaParser.
  *
  * Parses Scala source code into the IR (Intermediate Representation),
- * extracting domain models (ValueObject, Entity, SealedHierarchy) and
- * port interfaces.
+ * extracting domain models (ValueObject, Entity, SealedHierarchy),
+ * port interfaces, and application services.
  */
 class ScalametaParser extends ScalaParser {
 
@@ -54,7 +54,7 @@ class ScalametaParser extends ScalaParser {
   }
 
   /**
-   * Extract domain models and ports from a parsed Scala source.
+   * Extract domain models, ports, and services from a parsed Scala source.
    */
   private def extractFromSource(source: Source, filePath: String): Either[ParseError, ParseResult] = {
     // Try to extract from package or top-level stats
@@ -71,15 +71,22 @@ class ScalametaParser extends ScalaParser {
     val traits = collectTraits(stats)
     val objects = collectObjects(stats)
 
-    // Convert domain models
-    val domainModels = extractDomainModels(classes, traits, objects, packageName, filePath)
+    // Separate service classes from domain model classes
+    val (serviceClasses, nonServiceClasses) = classes.partition(ServiceConverter.isService)
+
+    // Convert domain models (excluding service classes)
+    val domainModels = extractDomainModels(nonServiceClasses, traits, objects, packageName, filePath)
 
     // Convert ports
     val ports = extractPorts(traits, packageName, filePath)
 
+    // Convert services
+    val services = extractServices(serviceClasses, packageName, filePath)
+
     Right(ParseResult(
       domainModels = domainModels,
-      ports = ports
+      ports = ports,
+      services = services
     ))
   }
 
@@ -165,6 +172,17 @@ class ScalametaParser extends ScalaParser {
     traits
       .filterNot(isSealedTrait)  // Exclude sealed traits (they become SealedHierarchy)
       .map(t => PortConverter.convertTrait(t, packageName, filePath))
+  }
+
+  /**
+   * Extract services (application layer classes) from AST.
+   */
+  private def extractServices(
+    serviceClasses: List[Defn.Class],
+    packageName: String,
+    filePath: String
+  ): List[Service] = {
+    serviceClasses.map(cls => ServiceConverter.convertClass(cls, packageName, filePath))
   }
 
   /**

@@ -249,6 +249,10 @@ object Main {
         result.ports.foreach { port =>
           println(s"  - ${port.name}")
         }
+        println(s"\nServices: ${result.services.size}")
+        result.services.foreach { service =>
+          println(s"  - ${service.name}")
+        }
 
         if (cmd.verbose) {
           println("\n=== Detailed IR ===\n")
@@ -257,6 +261,9 @@ object Main {
           }
           result.ports.foreach { port =>
             println(s"$port\n")
+          }
+          result.services.foreach { service =>
+            println(s"$service\n")
           }
         }
         0
@@ -363,6 +370,7 @@ object Main {
         println(s"Output: ${result.outputPath}")
         println(s"Domain models migrated: ${result.modelsProcessed}")
         println(s"Ports migrated: ${result.portsProcessed}")
+        println(s"Services migrated: ${result.servicesProcessed}")
 
         result.validationResult.foreach { validation =>
           if (validation.warnings.nonEmpty) {
@@ -453,7 +461,7 @@ object Main {
 
       pipeline.migrate(inputFile, outputFile, config) match {
         case Right(result) =>
-          println(s"  ✓ Migrated (${result.modelsProcessed} models, ${result.portsProcessed} ports)")
+          println(s"  ✓ Migrated (${result.modelsProcessed} models, ${result.portsProcessed} ports, ${result.servicesProcessed} services)")
           true
 
         case Left(error) =>

@@ -49,6 +49,76 @@ object KotlinRenderer {
   }
 
   /**
+   * Renders a Service to Kotlin code.
+   *
+   * Generates a Spring @Service annotated class with:
+   * - Constructor injection for dependencies
+   * - Private val properties for port dependencies
+   * - Suspend functions for methods with effect types
+   *
+   * @param service The service to render
+   * @return Kotlin source code as a string
+   */
+  def renderService(service: Service): String = {
+    val packageLine = if (service.packageName.nonEmpty) s"package ${service.packageName}\n\n" else ""
+
+    // Collect imports
+    val serviceImport = "import org.springframework.stereotype.Service"
+    val paramTypes = service.portDependencies.map(_.port) ++ service.otherDependencies.map(_.parameterType)
+    val methodParamTypes = service.methods.flatMap(m => m.parameters.map(_.parameterType) :+ m.returnType)
+    val allTypes = paramTypes ++ methodParamTypes
+    val typeImports = collectImports(allTypes)
+    val allImports = (serviceImport :: typeImports).sorted.distinct
+    val importsStr = allImports.mkString("\n") + "\n\n"
+
+    // Build constructor parameters
+    val constructorParams = service.constructorParameters.map { param =>
+      s"    private val ${param.name}: ${renderTypeNameSimple(param.parameterType)}"
+    }
+
+    val constructorStr = if (constructorParams.isEmpty) {
+      "()"
+    } else if (constructorParams.length == 1) {
+      s"(${constructorParams.head.trim})"
+    } else {
+      s"(\n${constructorParams.mkString(",\n")}\n)"
+    }
+
+    // Build methods
+    val methodsStr = service.methods.map(renderServiceMethod).mkString("\n\n")
+
+    val bodyStr = if (methodsStr.nonEmpty) {
+      s" {\n$methodsStr\n}"
+    } else {
+      ""
+    }
+
+    s"""${packageLine}${importsStr}@Service
+       |class ${service.name}$constructorStr$bodyStr
+       |""".stripMargin
+  }
+
+  /**
+   * Renders a service method to Kotlin code.
+   */
+  private def renderServiceMethod(method: Method): String = {
+    val suspendMod = if (method.isSuspend) "suspend " else ""
+    val paramsStr = method.parameters.map { p =>
+      s"${p.name}: ${renderTypeNameSimple(p.parameterType)}"
+    }.mkString(", ")
+
+    val returnTypeStr = method.returnType match {
+      case Type.UnitType => ""
+      case other => s": ${renderTypeNameSimple(other)}"
+    }
+
+    // For now, generate TODO body since we're not migrating implementation
+    s"""    ${suspendMod}fun ${method.name}($paramsStr)$returnTypeStr {
+       |        TODO("Migrate implementation from Scala")
+       |    }""".stripMargin
+  }
+
+  /**
    * Renders a DomainModel to Kotlin code.
    *
    * @param model The domain model to render
