@@ -1,0 +1,23 @@
+{
+  "run_id": "20260202-140233-643b7995",
+  "status": "completed",
+  "started_at": "2026-02-02T14:02:33.575968Z",
+  "completed_at": "2026-02-02T14:17:36.111802Z",
+  "project_path": "/Volumes/sourcecode/meta-breuninger/entdecken/reco/arch-tool",
+  "prompt_preview": "0. Familarize yourself with the code in `modules`.\n1. Familiarize yourself with the specs by looking...",
+  "completion_promise": "COMPLETE",
+  "exit_reason": "promise_fulfilled",
+  "iterations": [
+    {
+      "iteration": 1,
+      "session_id": "450ce9f3-e494-48f1-9ce9-81216a77e5cc",
+      "started_at": "2026-02-02T14:02:33.576244Z",
+      "ended_at": "2026-02-02T14:17:36.111712Z",
+      "end_reason": "promise_found",
+      "tokens": {
+        "input": 7915,
+        "output": 32318
+      }
+    }
+  ]
+}
